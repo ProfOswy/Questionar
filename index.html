@@ -2087,7 +2087,7 @@ function gerarCodigo(){const c=S.cc,temas=[...document.querySelectorAll('.tmck')
   const regrasT=(c.lim?`Tempo limite: ${c.lim} min por aluno\n`:'')+(prazoMin?`Encerramento: ${dataHora(prazoMin*60000)}\n`:'');
   const link=/^https?:/.test(location.protocol)?location.origin+location.pathname+'?c='+code:'';
   const inst=`QUESTIONAR — COMPETIÇÃO\n\nDisciplina: ${D.nome}\nFonte: ${SRC_NOME[c.src]}\nAssuntos: ${c.src==='e'?'todos (ENEM '+ENEM_ANOS.join(' e ')+')':temas.map(i=>D.temas[i].nome).join('; ')}\nNúmero de questões: ${n}\n${regrasT}\n\nCÓDIGO DA COMPETIÇÃO: ${code}\n${link?'Link direto: '+link+'\n':''}\nCOMO PARTICIPAR\n1. Abra o Questionar${link?'':' (endereço informado pelo professor)'}.\n2. Na tela inicial, em "Competição — aluno", digite o código acima e seu nome completo.\n3. Responda às questões. Não é possível voltar a uma questão já confirmada.\n4. Pontuação = número de acertos. Desempate = menor tempo total.\n5. Ao final, ${RECEBIMENTO_URL?'o resultado é enviado automaticamente ao professor. Guarde o CÓDIGO DE RESULTADO (começa com R-) como comprovante.':'copie o CÓDIGO DE RESULTADO (começa com R-) e envie ao professor.'}\n`;
-  S.cc.inst=inst;S.cc.code=code;S.cc.ext=c.lim?makeCode(c.k,c.src==='e'?D.temas.map((_,i)=>i):temas,n,c.gab,seed,c.src,c.lim,prazoMin,true):'';
+  S.cc.inst=inst;S.cc.code=code;lsSet('qst_ultcomp',code);S.cc.ext=c.lim?makeCode(c.k,c.src==='e'?D.temas.map((_,i)=>i):temas,n,c.gab,seed,c.src,c.lim,prazoMin,true):'';
   $('#ccOut').innerHTML=`<div class="card codebox">
     <span class="lbl">Código da competição</span><div class="bigcode mono">${code}</div>
     <p class="mute">${D.nome} · ${n} questões · ${SRC_NOME[c.src]}${c.src==='e'?'':' · '+temas.length+' assunto(s)'} · gabarito ${c.gab?'liberado':'oculto'} ao final${c.lim?' · tempo limite: '+c.lim+' min':''}${prazoMin?' · encerra em '+dataHora(prazoMin*60000):''}. Todos os alunos com este código recebem exatamente as mesmas questões, na mesma ordem.</p>
@@ -2163,24 +2163,29 @@ function enviarResultado(){const z=S.quiz;if(!RECEBIMENTO_URL||typeof fetch==='u
 function ranking(){stop();S.quiz=null;setAcc(null);S.rk=null;
   app().innerHTML=`
   <div class="top"><button class="back" onclick="home()">← Início</button><h2>Ranking da competição</h2></div>
-  <div class="card form">
+  ${RECEBIMENTO_URL?`<div class="card form"><h3>☁ Ranking automático</h3><p class="mute">Digite o código da competição para buscar os resultados que os alunos enviaram automaticamente.</p>
+    <div class="row"><input id="rkCode" class="mono" aria-label="Código da competição" placeholder="Ex.: M-ABC-10-12345-K" value="${esc((S.cc&&S.cc.code)||lsGet('qst_ultcomp')||'')}" onkeydown="if(event.key==='Enter')buscarRecebidos()"><button class="btn" onclick="buscarRecebidos()">Buscar e montar ranking</button></div>
+    <div id="rkMsg" role="status"></div></div>`:''}
+  <div class="card form">${RECEBIMENTO_URL?'<h3>📋 Ranking manual</h3>':''}
     <p class="mute">Cole os códigos de resultado enviados pelos alunos (podem vir misturados com outros textos — o Questionar encontra os códigos que começam com <span class="mono">R-</span>) ou carregue os arquivos .txt baixados por eles.</p>
     <textarea id="rkIn" class="mono" rows="7" placeholder="R-..."></textarea>
     <div class="row"><label class="btn ghost file">📂 Carregar arquivos .txt<input type="file" accept=".txt,text/plain" multiple onchange="lerArqs(this.files)"></label>
-      ${RECEBIMENTO_URL?'<input id="rkCode" class="mono" placeholder="Código da competição (para buscar os recebidos)"><button class="btn" onclick="buscarRecebidos()">☁ Buscar resultados recebidos</button>':''}
       <button class="btn" onclick="montarRanking()">Montar ranking</button><button class="btn ghost" onclick="$('#rkIn').value='';$('#rkOut').innerHTML=''">Limpar</button></div>
   </div>
   <div id="rkOut"></div>`;}
-function buscarRecebidos(){const c=parseCode($('#rkCode').value);if(!c){toast('Digite um código de competição válido');return;}toast('Buscando resultados…');
+function buscarRecebidos(){const msg=t=>{const m=$('#rkMsg');if(m)m.innerHTML=t;};const c=parseCode($('#rkCode').value);
+  if(!c){msg('<p class="err">Código inválido. Confira letras, números e hífens.</p>');return;}lsSet('qst_ultcomp',c.grupo);msg('<p class="mute">⏳ Buscando resultados…</p>');
   const cods=[c.grupo,...(c.extCode?[c.extCode]:[])];
-  Promise.all(cods.map(cd=>fetch(RECEBIMENTO_URL+'?code='+encodeURIComponent(cd)+'&t='+Date.now()).then(r=>r.json()))).then(js=>{const L=js.flatMap(j=>j.resultados||[]).filter(Boolean);
-    $('#rkIn').value=L.join('\n');toast(L.length+' resultado(s) recebido(s)');if(L.length)montarRanking();})
-  .catch(()=>toast('Não foi possível acessar os resultados recebidos'));}
+  Promise.all(cods.map(cd=>fetch(RECEBIMENTO_URL+'?code='+encodeURIComponent(cd)+'&t='+Date.now()).then(r=>r.text()).then(t=>{try{return JSON.parse(t);}catch(e){throw new Error('resp');}})))
+  .then(js=>{const L=js.flatMap(j=>j.resultados||[]).filter(Boolean);
+    if(!L.length){msg('<p class="alerta">Nenhum resultado recebido ainda para <span class="mono">'+esc(c.grupo)+'</span>. Os resultados chegam quando cada aluno termina a prova.</p>');$('#rkOut').innerHTML='';return;}
+    msg('<p class="alerta okb">✓ '+L.length+' resultado(s) recebido(s).</p>');$('#rkIn').value=L.join('\n');montarRanking();})
+  .catch(e=>msg('<p class="alerta">Não foi possível acessar a planilha de resultados. '+(e.message==='resp'?'O script da planilha respondeu com erro — confira o código no Apps Script e publique uma nova versão da implantação.':'Verifique a conexão com a internet.')+' Enquanto isso, use o ranking manual abaixo.</p>'));}
 function lerArqs(fs){[...fs].forEach(f=>{const r=new FileReader();r.onload=()=>{$('#rkIn').value+=(($('#rkIn').value?'\n':'')+r.result);};r.readAsText(f);});}
 function montarRanking(){
   const toks=($('#rkIn').value.match(/R-[A-Za-z0-9_-]{20,}/g)||[]);const val=[];let inval=0;
   toks.forEach(t=>{const r=parseResult(t);if(r)val.push(r);else inval++;});
-  if(!val.length){$('#rkOut').innerHTML=`<p class="err">Nenhum código de resultado válido encontrado${inval?` (${inval} inválido(s) ou adulterado(s))`:''}.</p>`;return;}
+  if(!val.length){$('#rkOut').innerHTML=`<p class="err">${toks.length?'':'A caixa está vazia. '}Nenhum código de resultado válido encontrado${inval?` (${inval} inválido(s) ou adulterado(s))`:''}.</p>`;return;}
   const porComp={};val.forEach(r=>{const g=parseCode(r.code).grupo;(porComp[g]=porComp[g]||[]).push(r);});
   const codes=Object.keys(porComp).sort((a,b)=>porComp[b].length-porComp[a].length);
   S.rk={porComp,codes,inval,atual:codes[0]};desenharRanking();}
