@@ -2180,7 +2180,7 @@ function buscarRecebidos(){const msg=t=>{const m=$('#rkMsg');if(m)m.innerHTML=t;
   .then(js=>{const L=js.flatMap(j=>j.resultados||[]).filter(Boolean);
     if(!L.length){msg('<p class="alerta">Nenhum resultado recebido ainda para <span class="mono">'+esc(c.grupo)+'</span>. Os resultados chegam quando cada aluno termina a prova.</p>');$('#rkOut').innerHTML='';return;}
     msg('<p class="alerta okb">✓ '+L.length+' resultado(s) recebido(s).</p>');$('#rkIn').value=L.join('\n');montarRanking();})
-  .catch(e=>msg('<p class="alerta">Não foi possível acessar a planilha de resultados. '+(e.message==='resp'?'O script da planilha respondeu com erro — confira o código no Apps Script e publique uma nova versão da implantação.':'Verifique a conexão com a internet.')+' Enquanto isso, use o ranking manual abaixo.</p>'));}
+  .catch(e=>msg('<p class="alerta">Não foi possível acessar a planilha de resultados. '+(navigator.onLine===false?'Você parece estar sem internet.':'O script da planilha não respondeu corretamente — em geral é um erro no código do Apps Script, uma implantação que não foi atualizada (<i>Gerenciar implantações → Nova versão</i>) ou o acesso não está como “Qualquer pessoa”. <a href="'+RECEBIMENTO_URL+'?code=TESTE" target="_blank" rel="noopener">Abrir o teste do script</a> — o correto é aparecer <span class="mono">{"ok":true,…}</span>.')+' Enquanto isso, use o ranking manual abaixo.</p>'));}
 function lerArqs(fs){[...fs].forEach(f=>{const r=new FileReader();r.onload=()=>{$('#rkIn').value+=(($('#rkIn').value?'\n':'')+r.result);};r.readAsText(f);});}
 function montarRanking(){
   const toks=($('#rkIn').value.match(/R-[A-Za-z0-9_-]{20,}/g)||[]);const val=[];let inval=0;
