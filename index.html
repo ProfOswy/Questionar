@@ -424,6 +424,15 @@ html[data-calmo] .cer-play{animation:none}
 .cer-sub{font-size:clamp(1rem,1.8vw,1.2rem);color:#a5d6a7;margin-top:6px;font-family:'IBM Plex Sans',sans-serif}
 .rkdet>summary{cursor:pointer;font-weight:700;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:12px}
 @media print{.rkdet>summary{display:none}.rkdet{display:block}}
+/* competição com várias disciplinas */
+.pill .ordn{display:inline-grid;place-items:center;width:1.35em;height:1.35em;border-radius:50%;background:#fff;color:var(--acc);font-weight:700;font-size:.85em;margin-right:4px}
+.ordbox{margin-top:10px;padding:10px 12px;border:1.5px dashed var(--acc);border-radius:10px}
+.ordlist{margin:6px 0 0;padding:0;list-style:none}
+.ordlist li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0}
+.ordlist li::marker{font-weight:700}
+.ordlist .btn.sm{padding:2px 10px;min-width:34px}
+.ccdisc{margin:10px 0 4px;font-family:'Kalam',cursive;font-size:1.1em}
+.pill.disc{display:inline-flex;align-items:center;gap:2px}
 </style>
 </head>
 <body>
@@ -1957,18 +1966,36 @@ function toggleTheme(){const r=document.documentElement,d=r.dataset.theme==='dar
 const ALF='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 const chk=s=>ALF[hashStr(s+'#questionar')%26];
-function makeCode(k,temas,n,gab,seed,src,lim,prazoMin,ext){const body=`${k}-${temas.map(i=>ALF[i]).join('')}-${n}${gab?'G':''}${src==='e'?'O':src==='m'?'E':''}${lim?'T'+lim:''}${lim&&ext?'X':''}${prazoMin?'P'+prazoMin.toString(36).toUpperCase():''}-${seed}`;return body+'-'+chk(body);}
+/* k: 'M' (uma disciplina) ou 'MFQ' (várias, na ordem escolhida). temas: lista de índices (uma) ou lista de listas (várias).
+   Várias disciplinas: assuntos de cada uma como máscara de bits em base 36, separadas por ponto. Flag R = ordem aleatória. */
+function makeCode(k,temas,n,gab,seed,src,lim,prazoMin,ext,ale){const ks=Array.isArray(k)?k.join(''):k,multi=ks.length>1;
+  const tm=multi?temas.map(g=>g.reduce((m,i)=>m+2**i,0).toString(36).toUpperCase()).join('.'):temas.map(i=>ALF[i]).join('');
+  const body=`${ks}-${tm}-${n}${gab?'G':''}${src==='e'?'O':src==='m'?'E':''}${multi&&ale?'R':''}${lim?'T'+lim:''}${lim&&ext?'X':''}${prazoMin?'P'+prazoMin.toString(36).toUpperCase():''}-${seed}`;return body+'-'+chk(body);}
 function parseCode(s){
   if(!s)return null;s=String(s).trim().toUpperCase().replace(/\s+/g,'');const p=s.split('-');if(p.length!==5)return null;
   const body=p.slice(0,4).join('-');if(chk(body)!==p[4])return null;
-  const k=p[0];if(!DATA[k])return null;
-  const temas=[...p[1]].map(c=>ALF.indexOf(c));if(!temas.length||temas.some(i=>i<0||i>=DATA[k].temas.length))return null;
-  const m=p[2].match(/^(\d+)([GEO]*)(?:T(\d{1,3}))?(X?)(?:P([0-9A-Z]{1,9}))?$/);if(!m)return null;const n=+m[1];if(n<1||n>50)return null;
+  const ks=[...p[0]];if(!ks.length||ks.length>3||ks.some(x=>!DATA[x])||new Set(ks).size!==ks.length)return null;const multi=ks.length>1;
+  let temasPor;
+  if(multi){const g=p[1].split('.');if(g.length!==ks.length)return null;
+    temasPor=g.map((x,j)=>{if(!/^[0-9A-Z]{1,4}$/.test(x))return null;const m=parseInt(x,36),nt=DATA[ks[j]].temas.length,r=[];for(let i=0;i<nt;i++)if(m&2**i)r.push(i);return m>=2**nt?null:r;});
+    if(temasPor.some(t=>!t||!t.length))return null;}
+  else{const t=[...p[1]].map(c=>ALF.indexOf(c));if(!t.length||t.some(i=>i<0||i>=DATA[ks[0]].temas.length))return null;temasPor=[t];}
+  const m=p[2].match(/^(\d+)([GEOR]*)(?:T(\d{1,3}))?(X?)(?:P([0-9A-Z]{1,9}))?$/);if(!m)return null;const n=+m[1];if(n<1||n>50||n<ks.length)return null;
   const seed=+p[3];if(!(seed>0))return null;
-  const gab=m[2].includes('G'),src=m[2].includes('O')?'e':m[2].includes('E')?'m':'g',base=m[3]?+m[3]:0,ext=!!(base&&m[4]),prazoMin=m[5]?parseInt(m[5],36):0;
-  const grupo=ext?makeCode(k,temas,n,gab,seed,src,base,prazoMin,false):s,extCode=base?makeCode(k,temas,n,gab,seed,src,base,prazoMin,true):'';
-  return {code:s,k,temas,n,gab,src,seed,lim:ext?Math.ceil(base*1.5):base,limBase:base,ext,grupo,extCode,prazo:prazoMin*60000};
+  const gab=m[2].includes('G'),src=m[2].includes('O')?'e':m[2].includes('E')?'m':'g',ale=multi&&m[2].includes('R'),base=m[3]?+m[3]:0,ext=!!(base&&m[4]),prazoMin=m[5]?parseInt(m[5],36):0;
+  const tArg=multi?temasPor:temasPor[0];
+  const grupo=ext?makeCode(ks,tArg,n,gab,seed,src,base,prazoMin,false,ale):s,extCode=base?makeCode(ks,tArg,n,gab,seed,src,base,prazoMin,true,ale):'';
+  return {code:s,k:ks[0],ks,multi,temas:temasPor[0],temasPor,ale,n,gab,src,seed,lim:ext?Math.ceil(base*1.5):base,limBase:base,ext,grupo,extCode,prazo:prazoMin*60000};
 }
+/* nome e assuntos de uma competição (uma ou várias disciplinas) */
+function nomeComp(c){return c.ks.map(k=>DATA[k].nome).join(' + ');}
+function assuntosComp(c){return c.ks.map((k,j)=>(c.multi?DATA[k].nome+': ':'')+c.temasPor[j].map(i=>DATA[k].temas[i].nome).join('; ')).join(' | ');}
+function divisao(n,m){return Array.from({length:m},(_,i)=>Math.floor(n/m)+(i<n%m?1:0));}
+/* lista de questões da competição: blocos por disciplina na ordem escolhida, ou embaralhados (ordem aleatória) */
+function listaComp(c){if(!c.multi)return montarLista(c.k,c.temas,-1,c.n,c.seed,c.src).map(q=>(q.k=q.k||c.k,q));
+  const ns=divisao(c.n,c.ks.length);let L=[];
+  c.ks.forEach((k,j)=>{L=L.concat(montarLista(k,c.temasPor[j],-1,ns[j],(c.seed+j*7919)>>>0,c.src).map(q=>(q.k=k,q)));});
+  if(c.ale)L=mkR((c.seed*31+7)>>>0).shuffle(L);return L;}
 const b64e=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const b64d=s=>decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
 const SAL='|qst-ProfOswy';
@@ -2072,13 +2099,13 @@ function comecarEstudo(k,ti,ci,n,nome,src='g',tag='',ano=''){
 
 /* ---------- tela de questão ---------- */
 function quiz(){
-  const z=S.quiz,v=z.view??z.i,q=z.lista[v],D=DATA[z.k],r=z.resp[v],comp=z.mode==='comp',ac=z.resp.filter(x=>x&&x.ok).length,rev=v<z.i;
+  const z=S.quiz,v=z.view??z.i,q=z.lista[v],D=DATA[q.k||z.k],r=z.resp[v],comp=z.mode==='comp',ac=z.resp.filter(x=>x&&x.ok).length,rev=v<z.i;if(z.ks&&z.ks.length>1)setAcc(q.k||z.k);
   app().innerHTML=`
   <div class="qbar">
     <button class="qexit" onclick="sairQuiz()" title="Sair do ${comp?'teste':'estudo'}">⟵ Sair</button>
     <div class="qmid"><div class="qinfo"><span class="cnt">Questão ${v+1} de ${z.n}</span><span class="clock mono" id="clock" role="timer" aria-live="off" aria-label="Cronômetro">⏱ ${relogio(Date.now()-z.t0)}</span>${comp?`<span class="who">${esc(z.nome)}</span>`:`<span class="score">✓ ${ac}</span>`}</div>
       <div class="prog" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="${z.n}" aria-valuenow="${z.i}"><div style="width:${z.i/z.n*100}%"></div></div></div>
-    <div class="qtools"><button class="tool btnOuvir" onclick="ouvirQuestao()" aria-pressed="false" title="Ouvir a questão (tecla O)" aria-label="Ouvir a questão em voz alta">🔊<span> Ouvir</span></button><button class="tool" onclick="abrirCalc()" title="Calculadora">🧮<span> Calculadora</span></button>${z.k==='Q'?'<button class="tool" onclick="abrirTabela()" title="Tabela periódica">⚛<span> Tabela</span></button>':''}</div>
+    <div class="qtools"><button class="tool btnOuvir" onclick="ouvirQuestao()" aria-pressed="false" title="Ouvir a questão (tecla O)" aria-label="Ouvir a questão em voz alta">🔊<span> Ouvir</span></button><button class="tool" onclick="abrirCalc()" title="Calculadora">🧮<span> Calculadora</span></button>${(z.ks||[z.k]).includes('Q')?'<button class="tool" onclick="abrirTabela()" title="Tabela periódica">⚛<span> Tabela</span></button>':''}</div>
   </div>
   ${rev?`<div class="revbar">Revendo a questão ${v+1} (já respondida) · <button class="lnk" onclick="verQ(null)">voltar para a questão ${z.i+1} →</button></div>`:''}
   <article class="qcard" aria-labelledby="qtit">
@@ -2174,18 +2201,30 @@ function baixarRel(){const z=S.quiz,css=document.getElementById('css').textConte
   baixar(`relatorio-${slug(z.nome)}-${new Date(z.t0).toISOString().slice(0,10)}.html`,html,'text/html;charset=utf-8');}
 
 /* ---------- competição: professor ---------- */
-function criarComp(k){stop();S.quiz=null;S.cc={k:k||'M',n:10,gab:false,src:'g',lim:0,prazoStr:''};drawCC();}
-function drawCC(){const c=S.cc,D=DATA[c.k];setAcc(c.k);
+function criarComp(k){stop();S.quiz=null;S.cc={k:k||'M',ks:[k||'M'],ale:false,n:10,gab:false,src:'g',lim:0,prazoStr:''};drawCC();}
+function ccMarcados(){const r={...(S.cc.marc||{})};document.querySelectorAll('.tmck').forEach(x=>{(r[x.dataset.k]=r[x.dataset.k]||{})[x.value]=x.checked;});return r;}
+function ccDisc(k){const c=S.cc;c.marc=ccMarcados();const i=c.ks.indexOf(k);if(i>=0){if(c.ks.length>1)c.ks.splice(i,1);}else c.ks.push(k);c.k=c.ks[0];drawCC();}
+function ccMover(i,d){const c=S.cc,j=i+d;if(j<0||j>=c.ks.length)return;c.marc=ccMarcados();[c.ks[i],c.ks[j]]=[c.ks[j],c.ks[i]];c.k=c.ks[0];drawCC();}
+function ccAle(v){S.cc.ale=v;S.cc.marc=ccMarcados();drawCC();}
+function ccNum(n){S.cc.n=n;document.querySelectorAll('.pill.nq').forEach(b=>b.classList.toggle('on',+b.dataset.n===n));const e=$('#ccDiv');if(e)e.innerHTML=ccDivTxt();}
+function ccDivTxt(){const c=S.cc;if(c.ks.length<2)return '';return 'Divisão: '+divisao(c.n,c.ks.length).map((x,j)=>`<b>${x}</b> de ${DATA[c.ks[j]].nome}`).join(' · ');}
+function drawCC(){const c=S.cc,multi=c.ks.length>1,marc=c.marc||{},D=DATA[c.k];setAcc(c.k);
+  const ck=(k,i)=>marc[k]&&(i in marc[k])?marc[k][i]:true,nEnem=c.ks.map(k=>ENEM.filter(e=>e.k===k).length);
   app().innerHTML=`
   <div class="top"><button class="back" onclick="home()">← Início</button><h2>Criar competição</h2></div>
   <div class="card form">
-    <div><span class="lbl">Disciplina</span><div class="qtd">${Object.entries(DATA).map(([k,d])=>`<button class="pill ${k===c.k?'on':''}" onclick="S.cc.k='${k}';drawCC()">${d.nome}</button>`).join('')}</div></div>
+    <div><span class="lbl">Disciplina(s) — marque uma ou mais</span><div class="qtd" role="group" aria-label="Disciplinas">${Object.entries(DATA).map(([k,d])=>{const p=c.ks.indexOf(k);return `<button class="pill disc ${p>=0?'on':''}" aria-pressed="${p>=0}" onclick="ccDisc('${k}')">${p>=0?(multi?`<span class="ordn">${p+1}</span>`:'✓ '):''}${d.nome}</button>`;}).join('')}</div>
+      ${multi?`<div class="ordbox"><span class="lbl">Ordem das questões</span><div class="qtd" role="group" aria-label="Ordem das questões">
+        <button class="pill ${!c.ale?'on':''}" aria-pressed="${!c.ale}" onclick="ccAle(false)">📚 Ordem específica</button>
+        <button class="pill ${c.ale?'on':''}" aria-pressed="${c.ale}" onclick="ccAle(true)">🔀 Ordem aleatória</button></div>
+        ${c.ale?'<p class="mute small">As questões das disciplinas marcadas aparecem misturadas, em ordem sorteada — a mesma para todos os alunos com o código.</p>':`<p class="mute small">As questões aparecem em blocos, uma disciplina depois da outra, nesta ordem (use as setas para trocar):</p>
+        <ol class="ordlist">${c.ks.map((k,i)=>`<li><b style="color:${DATA[k].cor}">${i+1}º · ${DATA[k].nome}</b><span><button class="btn sm ghost" ${i?'':'disabled'} onclick="ccMover(${i},-1)" aria-label="Subir ${DATA[k].nome}">▲</button> <button class="btn sm ghost" ${i<c.ks.length-1?'':'disabled'} onclick="ccMover(${i},1)" aria-label="Descer ${DATA[k].nome}">▼</button></span></li>`).join('')}</ol>`}</div>`:''}</div>
     <div><span class="lbl">Assuntos (as questões serão sorteadas entre os marcados)</span>
-      <div class="checks">${D.temas.map((t,i)=>`<label class="chk"><input type="checkbox" class="tmck" value="${i}" checked> ${t.nome}</label>`).join('')}</div>
+      ${c.ks.map(k=>`${multi?`<p class="ccdisc" style="color:${DATA[k].cor}"><b>${DATA[k].nome}</b></p>`:''}<div class="checks">${DATA[k].temas.map((t,i)=>`<label class="chk"><input type="checkbox" class="tmck" data-k="${k}" value="${i}" ${ck(k,i)?'checked':''}> ${t.nome}</label>`).join('')}</div>`).join('')}
       <div class="row"><button class="btn sm ghost" onclick="document.querySelectorAll('.tmck').forEach(x=>x.checked=true)">Marcar todos</button><button class="btn sm ghost" onclick="document.querySelectorAll('.tmck').forEach(x=>x.checked=false)">Desmarcar todos</button></div></div>
     <div><span class="lbl">Fonte das questões</span><div class="qtd">${SRC_OPC.map(([v,l])=>`<button class="pill ${v===c.src?'on':''}" onclick="S.cc.src='${v}';drawCC()">${l}</button>`).join('')}</div>
-      <p class="mute small">${c.src==='e'?`Só questões oficiais do ENEM ${ENEM_ANOS.join(' e ')} (${ENEM.filter(e=>e.k===c.k).length} disponíveis em ${D.nome}); os assuntos marcados são ignorados.`:c.src==='m'?'Questões similares misturadas com questões oficiais do ENEM dos assuntos marcados (cerca de 1 em cada 3).':'Questões similares às do ENEM, geradas pelo Questionar.'}</p></div>
-    <div><span class="lbl">Número de questões</span><div class="qtd">${[5,10,15,20,30].map(n=>`<button class="pill ${n===c.n?'on':''}" onclick="S.cc.n=${n};this.parentNode.querySelectorAll('.pill').forEach(b=>b.classList.toggle('on',b===this))">${n}</button>`).join('')}</div></div>
+      <p class="mute small">${c.src==='e'?`Só questões oficiais do ENEM ${ENEM_ANOS.join(' e ')} (${c.ks.map((k,j)=>nEnem[j]+' de '+DATA[k].nome).join(', ')} disponíveis); os assuntos marcados são ignorados.`:c.src==='m'?'Questões similares misturadas com questões oficiais do ENEM dos assuntos marcados (cerca de 1 em cada 3).':'Questões similares às do ENEM, geradas pelo Questionar.'}</p></div>
+    <div><span class="lbl">Número de questões</span><div class="qtd">${[5,10,15,20,30,45].map(n=>`<button class="pill nq ${n===c.n?'on':''}" data-n="${n}" onclick="ccNum(${n})">${n}</button>`).join('')}</div><p class="mute small" id="ccDiv">${ccDivTxt()}</p></div>
     <label class="chk"><input type="checkbox" id="gabCk" ${c.gab?'checked':''} onchange="S.cc.gab=this.checked"> Mostrar gabarito e resoluções ao aluno no final (deixe desmarcado se a turma jogar em horários diferentes)</label>
     <div><span class="lbl">Tempo limite para cada aluno</span><div class="qtd">${[0,5,10,15,20,30,45,60].map(m=>`<button class="pill lim ${m===c.lim?'on':''}" onclick="S.cc.lim=${m};document.querySelectorAll('.pill.lim').forEach(b=>b.classList.toggle('on',b===this));$('#limIn').value=${m||"''"}">${m?m+' min':'Sem limite'}</button>`).join('')}<input id="limIn" type="number" min="1" max="999" placeholder="min" value="${c.lim||''}" oninput="S.cc.lim=Math.max(0,Math.min(999,parseInt(this.value)||0));document.querySelectorAll('.pill.lim').forEach(b=>b.classList.remove('on'))"></div>
       <p class="mute small">O cronômetro do aluno passa a contar regressivamente. Ao zerar, a prova é encerrada automaticamente e as questões não respondidas contam como erro.</p></div>
@@ -2195,18 +2234,24 @@ function drawCC(){const c=S.cc,D=DATA[c.k];setAcc(c.k);
     <p class="err" id="ccErr"></p>
   </div>
   <div id="ccOut"></div>`;}
-function gerarCodigo(){const c=S.cc,temas=[...document.querySelectorAll('.tmck')].filter(x=>x.checked).map(x=>+x.value);
-  if(!temas.length){$('#ccErr').textContent='Marque pelo menos um assunto.';return;}$('#ccErr').textContent='';
-  const D=DATA[c.k],tot=ENEM.filter(e=>e.k===c.k).length;let n=c.n;if(c.src==='e'){if(!tot){$('#ccErr').textContent='Não há questões do ENEM para esta disciplina.';return;}n=Math.min(n,tot);}
+function gerarCodigo(){const c=S.cc,multi=c.ks.length>1,marc=ccMarcados();c.marc=marc;
+  const temasPor=c.ks.map(k=>c.src==='e'?DATA[k].temas.map((_,i)=>i):DATA[k].temas.map((_,i)=>i).filter(i=>!marc[k]||marc[k][i]!==false));
+  const falta=c.ks.filter((k,j)=>!temasPor[j].length);if(falta.length){$('#ccErr').textContent='Marque pelo menos um assunto de '+falta.map(k=>DATA[k].nome).join(' e ')+'.';return;}$('#ccErr').textContent='';
+  let n=c.n;if(n<c.ks.length)n=c.ks.length;
+  if(c.src==='e'){const tots=c.ks.map(k=>ENEM.filter(e=>e.k===k).length);if(tots.some(t=>!t)){$('#ccErr').textContent='Não há questões do ENEM para uma das disciplinas.';return;}
+    const ns=divisao(n,c.ks.length);if(ns.some((x,j)=>x>tots[j]))n=Math.min(n,Math.min(...tots)*c.ks.length);}
   let prazoMin=0;if(c.prazoStr){const t=new Date(c.prazoStr).getTime();if(!(t>Date.now()+60000)){$('#ccErr').textContent='O horário de encerramento precisa estar no futuro.';return;}prazoMin=Math.floor(t/60000);}
-  const seed=10000+Math.floor(Math.random()*89999),code=makeCode(c.k,c.src==='e'?D.temas.map((_,i)=>i):temas,n,c.gab,seed,c.src,c.lim||0,prazoMin);c.nUsado=n;
+  const tArg=multi?temasPor:temasPor[0],temas=temasPor[0];
+  const seed=10000+Math.floor(Math.random()*89999),code=makeCode(c.ks,tArg,n,c.gab,seed,c.src,c.lim||0,prazoMin,false,c.ale);c.nUsado=n;
+  const pc=parseCode(code),nomeD=nomeComp(pc),D={nome:nomeD};
+  const ordemT=multi?`Ordem: ${c.ale?'aleatória (disciplinas misturadas)':'por disciplina — '+c.ks.map(k=>DATA[k].nome).join(' → ')}\nDivisão: ${divisao(n,c.ks.length).map((x,j)=>x+' de '+DATA[c.ks[j]].nome).join(', ')}\n`:'';
   const regrasT=(c.lim?`Tempo limite: ${c.lim} min por aluno\n`:'')+(prazoMin?`Encerramento: ${dataHora(prazoMin*60000)}\n`:'');
   const link=/^https?:/.test(location.protocol)?location.origin+location.pathname+'?c='+code:'';
-  const inst=`QUESTIONAR — COMPETIÇÃO\n\nDisciplina: ${D.nome}\nFonte: ${SRC_NOME[c.src]}\nAssuntos: ${c.src==='e'?'todos (ENEM '+ENEM_ANOS.join(' e ')+')':temas.map(i=>D.temas[i].nome).join('; ')}\nNúmero de questões: ${n}\n${regrasT}\n\nCÓDIGO DA COMPETIÇÃO: ${code}\n${link?'Link direto: '+link+'\n':''}\nCOMO PARTICIPAR\n1. Abra o Questionar${link?'':' (endereço informado pelo professor)'}.\n2. Na tela inicial, em "Competição — aluno", digite o código acima e seu nome completo.\n3. Responda às questões. Não é possível voltar a uma questão já confirmada.\n4. Pontuação = número de acertos. Desempate = menor tempo total.\n5. Ao final, ${RECEBIMENTO_URL?'o resultado é enviado automaticamente ao professor. Guarde o CÓDIGO DE RESULTADO (começa com R-) como comprovante.':'copie o CÓDIGO DE RESULTADO (começa com R-) e envie ao professor.'}\n`;
-  S.cc.inst=inst;S.cc.code=code;lsSet('qst_ultcomp',code);S.cc.ext=c.lim?makeCode(c.k,c.src==='e'?D.temas.map((_,i)=>i):temas,n,c.gab,seed,c.src,c.lim,prazoMin,true):'';
+  const inst=`QUESTIONAR — COMPETIÇÃO\n\nDisciplina${multi?'s':''}: ${D.nome}\n${ordemT}Fonte: ${SRC_NOME[c.src]}\nAssuntos: ${c.src==='e'?'todos (ENEM '+ENEM_ANOS.join(' e ')+')':assuntosComp(pc)}\nNúmero de questões: ${n}\n${regrasT}\n\nCÓDIGO DA COMPETIÇÃO: ${code}\n${link?'Link direto: '+link+'\n':''}\nCOMO PARTICIPAR\n1. Abra o Questionar${link?'':' (endereço informado pelo professor)'}.\n2. Na tela inicial, em "Competição — aluno", digite o código acima e seu nome completo.\n3. Responda às questões. Não é possível voltar a uma questão já confirmada.\n4. Pontuação = número de acertos. Desempate = menor tempo total.\n5. Ao final, ${RECEBIMENTO_URL?'o resultado é enviado automaticamente ao professor. Guarde o CÓDIGO DE RESULTADO (começa com R-) como comprovante.':'copie o CÓDIGO DE RESULTADO (começa com R-) e envie ao professor.'}\n`;
+  S.cc.inst=inst;S.cc.code=code;lsSet('qst_ultcomp',code);S.cc.ext=c.lim?makeCode(c.ks,tArg,n,c.gab,seed,c.src,c.lim,prazoMin,true,c.ale):'';
   $('#ccOut').innerHTML=`<div class="card codebox">
     <span class="lbl">Código da competição</span><div class="bigcode mono">${code}</div>
-    <p class="mute">${D.nome} · ${n} questões · ${SRC_NOME[c.src]}${c.src==='e'?'':' · '+temas.length+' assunto(s)'} · gabarito ${c.gab?'liberado':'oculto'} ao final${c.lim?' · tempo limite: '+c.lim+' min':''}${prazoMin?' · encerra em '+dataHora(prazoMin*60000):''}. Todos os alunos com este código recebem exatamente as mesmas questões, na mesma ordem.</p>
+    <p class="mute">${D.nome} · ${n} questões · ${SRC_NOME[c.src]}${multi?' · ordem '+(c.ale?'aleatória':'específica'):''}${c.src==='e'?'':' · '+temasPor.reduce((a,t)=>a+t.length,0)+' assunto(s)'} · gabarito ${c.gab?'liberado':'oculto'} ao final${c.lim?' · tempo limite: '+c.lim+' min':''}${prazoMin?' · encerra em '+dataHora(prazoMin*60000):''}. Todos os alunos com este código recebem exatamente as mesmas questões, na mesma ordem.</p>
     ${link?`<p class="mute mono small">${esc(link)}</p>`:''}
     <div class="row">
       <button class="btn" onclick="copiar(S.cc.code)">Copiar código</button>
@@ -2222,12 +2267,12 @@ function gerarCodigo(){const c=S.cc,temas=[...document.querySelectorAll('.tmck')
 
 /* ---------- competição: aluno ---------- */
 function entrarCodigo(){const v=$('#codeIn').value;if(!parseCode(v)){$('#codeErr').textContent='Código inválido. Confira letras, números e hífens.';return;}entrar(v);}
-function entrar(code){stop();S.quiz=null;const c=parseCode(code);if(!c){home();return;}const D=DATA[c.k];setAcc(c.k);
+function entrar(code){stop();S.quiz=null;const c=parseCode(code);if(!c){home();return;}setAcc(c.k);
   app().innerHTML=`
-  <div class="top"><button class="back" onclick="home()">← Início</button><h2>Competição de ${D.nome}</h2></div>
+  <div class="top"><button class="back" onclick="home()">← Início</button><h2>Competição de ${nomeComp(c)}</h2></div>
   <div class="card form">
     <p class="bigcode mono sm">${c.code}</p>
-    <p><b>${c.n} questões</b> · ${SRC_NOME[c.src]}${c.src==='e'?'':' · Assuntos: '+c.temas.map(i=>D.temas[i].nome).join('; ')}</p>
+    <p><b>${c.n} questões</b> · ${SRC_NOME[c.src]}${c.multi?' · '+divisao(c.n,c.ks.length).map((x,j)=>x+' de '+DATA[c.ks[j]].nome).join(', ')+' · ordem '+(c.ale?'aleatória (disciplinas misturadas)':'por disciplina: '+nomeComp(c).replace(/ \+ /g,' → ')):''}${c.src==='e'?'':' · Assuntos: '+assuntosComp(c)}</p>
     <ul class="regras">
       <li>Pontuação = número de acertos. Desempate = menor tempo total.</li>
       <li>O cronômetro começa ao clicar em “Começar” e para na última confirmação.</li>
@@ -2241,8 +2286,8 @@ function entrar(code){stop();S.quiz=null;const c=parseCode(code);if(!c){home();r
     ${c.prazo&&Date.now()>=c.prazo?`<p class="alerta"><b>Competição encerrada</b> em ${dataHora(c.prazo)}. Não é mais possível participar.</p>`:`<button class="btn big" onclick="iniciarComp('${c.code}')">Começar ▶</button>`}
   </div>`;}
 function iniciarComp(code){const nome=$('#nomeComp').value.trim().replace(/\s+/g,' ');if(nome.length<3){$('#ncErr').textContent='Informe seu nome (mínimo 3 letras).';return;}lsSet('qst_nome',nome);
-  const c=parseCode(code);if(c.prazo&&Date.now()>=c.prazo){entrar(code);return;}const lista=montarLista(c.k,c.temas,-1,c.n,c.seed,c.src);
-  comEnem(lista,()=>{S.quiz={mode:'comp',k:c.k,code:c.code,gab:c.gab,nome,n:c.n,lista,i:0,resp:[],sel:null,t0:Date.now(),tq:Date.now(),limMs:c.lim*60000,prazo:c.prazo};
+  const c=parseCode(code);if(c.prazo&&Date.now()>=c.prazo){entrar(code);return;}const lista=listaComp(c);
+  comEnem(lista,()=>{S.quiz={mode:'comp',k:c.k,ks:c.ks,code:c.code,gab:c.gab,nome,n:lista.length,lista,i:0,resp:[],sel:null,t0:Date.now(),tq:Date.now(),limMs:c.lim*60000,prazo:c.prazo};
   startTimer();quiz();window.scrollTo(0,0);});}
 function medalha(p){return p>=90?['🥇','Ouro']:p>=70?['🥈','Prata']:p>=50?['🥉','Bronze']:['🎯','Participação'];}
 function fimComp(){stop();const z=S.quiz;z.fim=Date.now();const ac=z.resp.filter(r=>r.ok).length,ms=Math.min(z.fim-z.t0,z.limMs||Infinity),pct=ac/z.n*100,[em,mn]=medalha(pct);z.msFinal=ms;
@@ -2329,7 +2374,7 @@ function montarRanking(silencioso){if(!silencioso)somIniciar();
 function revelar(forcar){const c=parseCode(S.rk.atual),n=S.rk.lista.length,esp=S.rkEsp||0;
   if(!forcar&&esp&&n<esp){modal('Ainda faltam respostas',`Foram contabilizadas <b>${n}</b> de <b>${esp}</b> respostas esperadas. Faltam <b>${esp-n}</b>. Deseja iniciar a cerimônia mesmo assim?`,[{label:'Aguardar'},{label:'Iniciar mesmo assim',cls:'ghost',fn:()=>revelar(true)}]);return;}
   const quando=S.rkAuto?' · atualizado às '+new Date(S.rkAuto.em).toLocaleTimeString('pt-BR'):'';
-  cerimonia(S.rk.lista,'Competição de '+DATA[c.k].nome+' · '+n+' participante(s)',`✅ ${n} resposta(s) contabilizada(s)${esp?' de '+esp+' esperada(s)':''}${quando}`);}
+  cerimonia(S.rk.lista,'Competição de '+nomeComp(c)+' · '+n+' participante(s)',`✅ ${n} resposta(s) contabilizada(s)${esp?' de '+esp+' esperada(s)':''}${quando}`);}
 /* painel de conferência: quantas respostas chegaram antes de revelar o ranking */
 function htmlConf(){const n=S.rk.lista.length,esp=S.rkEsp||0,auto=!!S.rkAuto,pct=esp?Math.min(100,n/esp*100):100,falta=esp?Math.max(0,esp-n):0;
   const st=esp?(falta?`⏳ Faltam <b>${falta}</b> resposta(s). Aguarde os alunos terminarem${auto?' — a lista se atualiza sozinha':''}.`:(n>esp?`⚠ Chegaram mais respostas (${n}) do que o esperado (${esp}). Confira a lista de nomes.`:'✅ <b>Todas as respostas esperadas chegaram!</b> Pode iniciar a cerimônia.')):'Informe quantos alunos participaram para o Questionar avisar quando todas as respostas tiverem chegado.';
@@ -2344,20 +2389,20 @@ function htmlConf(){const n=S.rk.lista.length,esp=S.rkEsp||0,auto=!!S.rkAuto,pct
 function atualizarConf(foco){const el=document.getElementById('confCard');if(!el||!S.rk)return;const ae=document.activeElement&&document.activeElement.id;const v=ae==='espIn'?$('#espIn').value:null;
   el.outerHTML=htmlConf();if(foco||ae==='espIn'){const i=$('#espIn');if(i){if(v!=null)i.value=v;i.focus();}}}
 function desenharRanking(){
-  const {porComp,codes,inval,atual}=S.rk,c=parseCode(atual),D=DATA[c.k];setAcc(c.k);
+  const {porComp,codes,inval,atual}=S.rk,c=parseCode(atual);setAcc(c.k);
   const vist=new Map();let dup=0;
   [...porComp[atual]].sort((a,b)=>a.fin-b.fin).forEach(r=>{const key=r.nome.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');if(vist.has(key)){dup++;return;}vist.set(key,r);});
   const tr=r=>parseCode(r.code).ext?r.ms/1.5:r.ms,isExt=r=>parseCode(r.code).ext;
   const todos=[...vist.values()].sort((a,b)=>b.a-a.a||tr(a)-tr(b)),fora=c.prazo?todos.filter(r=>r.fin>c.prazo+120000):[],L=todos.filter(r=>!fora.includes(r));S.rk.lista=L;
-  const nq=c.n,taxa=Array.from({length:nq},(_,i)=>L.filter(r=>r.bits[i]==="1").length/(L.length||1)*100);
+  const nq=(L[0]&&L[0].t)||c.n,taxa=Array.from({length:nq},(_,i)=>L.filter(r=>r.bits[i]==="1").length/(L.length||1)*100);
   const pod=L.slice(0,3);S.rkEsp=parseInt(lsGet('qst_esp_'+atual))||0;
   $('#rkOut').innerHTML=`
   ${codes.length>1?`<div class="card"><span class="lbl">Foram encontradas ${codes.length} competições diferentes. Exibindo:</span><select onchange="S.rk.atual=this.value;desenharRanking()">${codes.map(k=>`<option value="${k}" ${k===atual?'selected':''}>${k} (${porComp[k].length} resultado(s))</option>`).join('')}</select></div>`:''}
   <div class="noprint">${htmlConf()}</div>
   <details class="rkdet" id="rkDet" ${S.rkVisto?'open':''}><summary>📊 Ver ranking completo (tabela, pódio e acertos por questão)<span class="mute small"> — fica oculto para não estragar a surpresa no projetor</span></summary>
   <div id="rkPrint">
-  <div class="card"><h3>${D.nome} · <span class="mono">${atual}</span></h3>
- <p class="mute">${L.length} participante(s) · ${nq} questões${c.lim?' · limite de '+c.lim+' min':''}${c.prazo?' · encerramento: '+dataHora(c.prazo):''} · Assuntos: ${c.temas.map(i=>D.temas[i].nome).join('; ')}${dup?` · ${dup} envio(s) repetido(s) ignorado(s) (vale a primeira tentativa)`:''}${inval?` · ${inval} código(s) inválido(s)`:''}</p>
+  <div class="card"><h3>${nomeComp(c)} · <span class="mono">${atual}</span></h3>
+ <p class="mute">${L.length} participante(s) · ${nq} questões${c.lim?' · limite de '+c.lim+' min':''}${c.prazo?' · encerramento: '+dataHora(c.prazo):''}${c.multi?' · ordem '+(c.ale?'aleatória':'por disciplina'):''} · Assuntos: ${assuntosComp(c)}${dup?` · ${dup} envio(s) repetido(s) ignorado(s) (vale a primeira tentativa)`:''}${inval?` · ${inval} código(s) inválido(s)`:''}</p>
   <div class="podio">${[1,0,2].map(i=>pod[i]?`<div class="pd p${i+1}"><div class="pm">${['🥇','🥈','🥉'][i]}</div><b>${esc(pod[i].nome)}</b><span>${pod[i].a} pts · ${tempoExt(pod[i].ms)}</span><div class="bar"></div></div>`:'').join('')}</div>
   <table><thead><tr><th>Pos.</th><th>Nome</th><th>Pontos</th><th>Tempo</th><th>Aproveit.</th><th>Finalizado em</th></tr></thead><tbody>
   ${L.map((r,i)=>`<tr><td>${i+1}º</td><td>${esc(r.nome)}${isExt(r)?' <span class="badge" title="Tempo adicional: no desempate, o tempo foi dividido por 1,5">♿ tempo adicional</span>':''}</td><td><b>${r.a}</b>/${r.t}</td><td class="mono">${tempoExt(r.ms)}</td><td>${fmt(r.a/r.t*100,0)}%</td><td>${dataHora(r.fin)}</td></tr>`).join('')}

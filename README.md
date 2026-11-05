@@ -32,6 +32,7 @@ O Questionar é uma ferramenta gratuita para estudantes do ensino médio e pré-
 **🏆 Competir**
 - O professor escolhe disciplina, assuntos, fonte e número de questões e gera um **código** (ou link). Todos os alunos recebem as mesmas questões, na mesma ordem.
 - **Pontuação = acertos; desempate = menor tempo.**
+- **Uma ou mais disciplinas** na mesma competição (Matemática, Física e/ou Química), com as questões em **ordem específica** (blocos na ordem escolhida pelo professor) ou em **ordem aleatória** (disciplinas misturadas). Os códigos antigos, de uma disciplina, continuam válidos.
 - **Tempo limite** por aluno (com contagem regressiva e encerramento automático) e **horário de encerramento** da competição.
 - **Código com tempo adicional (+50%)** para estudantes com direito a atendimento especializado, no mesmo ranking.
 - Ao final, o aluno recebe um **código de resultado** verificável; com a planilha configurada, o resultado é **enviado automaticamente** ao professor.
