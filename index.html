@@ -432,7 +432,7 @@ html[data-calmo] .cer-play{animation:none}
 .ordlist li::marker{font-weight:700}
 .ordlist .btn.sm{padding:2px 10px;min-width:34px}
 .ccdisc{margin:10px 0 4px;font-family:'Kalam',cursive;font-size:1.1em}
-.pill.disc{display:inline-flex;align-items:center;gap:2px}
+.pill.pdisc{display:inline-flex;align-items:center;gap:2px}
 </style>
 </head>
 <body>
@@ -2201,9 +2201,9 @@ function baixarRel(){const z=S.quiz,css=document.getElementById('css').textConte
   baixar(`relatorio-${slug(z.nome)}-${new Date(z.t0).toISOString().slice(0,10)}.html`,html,'text/html;charset=utf-8');}
 
 /* ---------- competição: professor ---------- */
-function criarComp(k){stop();S.quiz=null;S.cc={k:k||'M',ks:[k||'M'],ale:false,n:10,gab:false,src:'g',lim:0,prazoStr:''};drawCC();}
+function criarComp(k){stop();S.quiz=null;S.cc={k:null,ks:[],ale:false,n:10,gab:false,src:'g',lim:0,prazoStr:''};drawCC();}
 function ccMarcados(){const r={...(S.cc.marc||{})};document.querySelectorAll('.tmck').forEach(x=>{(r[x.dataset.k]=r[x.dataset.k]||{})[x.value]=x.checked;});return r;}
-function ccDisc(k){const c=S.cc;c.marc=ccMarcados();const i=c.ks.indexOf(k);if(i>=0){if(c.ks.length>1)c.ks.splice(i,1);}else c.ks.push(k);c.k=c.ks[0];drawCC();}
+function ccDisc(k){const c=S.cc;c.marc=ccMarcados();const i=c.ks.indexOf(k);if(i>=0)c.ks.splice(i,1);else c.ks.push(k);c.k=c.ks[0]||null;drawCC();}
 function ccMover(i,d){const c=S.cc,j=i+d;if(j<0||j>=c.ks.length)return;c.marc=ccMarcados();[c.ks[i],c.ks[j]]=[c.ks[j],c.ks[i]];c.k=c.ks[0];drawCC();}
 function ccAle(v){S.cc.ale=v;S.cc.marc=ccMarcados();drawCC();}
 function ccNum(n){S.cc.n=n;document.querySelectorAll('.pill.nq').forEach(b=>b.classList.toggle('on',+b.dataset.n===n));const e=$('#ccDiv');if(e)e.innerHTML=ccDivTxt();}
@@ -2213,7 +2213,7 @@ function drawCC(){const c=S.cc,multi=c.ks.length>1,marc=c.marc||{},D=DATA[c.k];s
   app().innerHTML=`
   <div class="top"><button class="back" onclick="home()">← Início</button><h2>Criar competição</h2></div>
   <div class="card form">
-    <div><span class="lbl">Disciplina(s) — marque uma ou mais</span><div class="qtd" role="group" aria-label="Disciplinas">${Object.entries(DATA).map(([k,d])=>{const p=c.ks.indexOf(k);return `<button class="pill disc ${p>=0?'on':''}" aria-pressed="${p>=0}" onclick="ccDisc('${k}')">${p>=0?(multi?`<span class="ordn">${p+1}</span>`:'✓ '):''}${d.nome}</button>`;}).join('')}</div>
+    <div><span class="lbl">Disciplina(s) — marque uma ou mais</span><div class="qtd" role="group" aria-label="Disciplinas">${Object.entries(DATA).map(([k,d])=>{const p=c.ks.indexOf(k);return `<button class="pill pdisc ${p>=0?'on':''}" aria-pressed="${p>=0}" onclick="ccDisc('${k}')">${p>=0?(multi?`<span class="ordn">${p+1}</span>`:'✓ '):''}${d.nome}</button>`;}).join('')}</div>
       ${multi?`<div class="ordbox"><span class="lbl">Ordem das questões</span><div class="qtd" role="group" aria-label="Ordem das questões">
         <button class="pill ${!c.ale?'on':''}" aria-pressed="${!c.ale}" onclick="ccAle(false)">📚 Ordem específica</button>
         <button class="pill ${c.ale?'on':''}" aria-pressed="${c.ale}" onclick="ccAle(true)">🔀 Ordem aleatória</button></div>
@@ -2233,8 +2233,9 @@ function drawCC(){const c=S.cc,multi=c.ks.length>1,marc=c.marc||{},D=DATA[c.k];s
     <button class="btn big" onclick="gerarCodigo()">Gerar código</button>
     <p class="err" id="ccErr"></p>
   </div>
-  <div id="ccOut"></div>`;}
-function gerarCodigo(){const c=S.cc,multi=c.ks.length>1,marc=ccMarcados();c.marc=marc;
+  <div id="ccOut"></div>`;
+  if(!c.ks.length){const f=document.querySelector('.card.form');[...f.children].slice(1).forEach(e=>e.remove());f.insertAdjacentHTML('beforeend','<p class="mute" role="status">👆 Selecione primeiro a(s) disciplina(s) da competição. Depois aparecem a ordem, os assuntos e as demais opções.</p>');}}
+function gerarCodigo(){const c=S.cc;if(!c.ks.length)return;const multi=c.ks.length>1,marc=ccMarcados();c.marc=marc;
   const temasPor=c.ks.map(k=>c.src==='e'?DATA[k].temas.map((_,i)=>i):DATA[k].temas.map((_,i)=>i).filter(i=>!marc[k]||marc[k][i]!==false));
   const falta=c.ks.filter((k,j)=>!temasPor[j].length);if(falta.length){$('#ccErr').textContent='Marque pelo menos um assunto de '+falta.map(k=>DATA[k].nome).join(' e ')+'.';return;}$('#ccErr').textContent='';
   let n=c.n;if(n<c.ks.length)n=c.ks.length;
