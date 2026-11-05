@@ -433,6 +433,7 @@ html[data-calmo] .cer-play{animation:none}
 .ordlist .btn.sm{padding:2px 10px;min-width:34px}
 .ccdisc{margin:10px 0 4px;font-family:'Kalam',cursive;font-size:1.1em}
 .pill.pdisc{display:inline-flex;align-items:center;gap:2px}
+.encok{margin:8px 0;padding:8px 12px;border-radius:8px;background:rgba(198,40,40,.08);border-left:4px solid #c62828}
 </style>
 </head>
 <body>
@@ -1943,9 +1944,10 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const LT='ABCDE';
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
-function relogio(ms){const t=Math.floor(ms/100),d=t%10,s=Math.floor(t/10)%60,m=Math.floor(t/600);return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${d}`;}
+function relogio(ms){const t=Math.floor(ms/100),d=t%10,s=Math.floor(t/10)%60,m=Math.floor(t/600);if(m>=60)return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}:${String(s).padStart(2,'0')}`;return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${d}`;}
+function durTxt(m){const h=Math.floor(m/60),r=m%60;return h?(h+' h'+(r?' '+r+' min':'')):m+' min';}
 function tempoExt(ms){const s=ms/1000,m=Math.floor(s/60),r=s-m*60;return (m?m+' min ':'')+fmtF(r,1)+' s';}
-function stop(){clearInterval(S.timer);S.timer=null;clearInterval(S.rkPoll);S.rkPoll=null;}
+function stop(){clearInterval(S.timer);S.timer=null;clearInterval(S.rkPoll);S.rkPoll=null;clearInterval(S.encPoll);S.encPoll=null;}
 function startTimer(){stop();S.timer=setInterval(()=>{const z=S.quiz;if(!z)return;const el=document.getElementById('clock'),agora=Date.now();
   if(z.mode==='comp'&&!z.fim){const fimEm=Math.min(z.limMs?z.t0+z.limMs:Infinity,z.prazo||Infinity);
     if(agora>=fimEm){encerrarPorTempo(z.prazo&&agora>=z.prazo&&(!z.limMs||z.prazo<=z.t0+z.limMs)?'prazo':'tempo');return;}
@@ -1968,9 +1970,9 @@ function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt
 const chk=s=>ALF[hashStr(s+'#questionar')%26];
 /* k: 'M' (uma disciplina) ou 'MFQ' (várias, na ordem escolhida). temas: lista de índices (uma) ou lista de listas (várias).
    Várias disciplinas: assuntos de cada uma como máscara de bits em base 36, separadas por ponto. Flag R = ordem aleatória. */
-function makeCode(k,temas,n,gab,seed,src,lim,prazoMin,ext,ale){const ks=Array.isArray(k)?k.join(''):k,multi=ks.length>1;
+function makeCode(k,temas,n,gab,seed,src,lim,prazoMin,ext,ale,semCalc,semTab){const ks=Array.isArray(k)?k.join(''):k,multi=ks.length>1;
   const tm=multi?temas.map(g=>g.reduce((m,i)=>m+2**i,0).toString(36).toUpperCase()).join('.'):temas.map(i=>ALF[i]).join('');
-  const body=`${ks}-${tm}-${n}${gab?'G':''}${src==='e'?'O':src==='m'?'E':''}${multi&&ale?'R':''}${lim?'T'+lim:''}${lim&&ext?'X':''}${prazoMin?'P'+prazoMin.toString(36).toUpperCase():''}-${seed}`;return body+'-'+chk(body);}
+  const body=`${ks}-${tm}-${n}${gab?'G':''}${src==='e'?'O':src==='m'?'E':''}${multi&&ale?'R':''}${semCalc?'C':''}${semTab&&ks.includes('Q')?'Y':''}${lim?'T'+lim:''}${lim&&ext?'X':''}${prazoMin?'P'+prazoMin.toString(36).toUpperCase():''}-${seed}`;return body+'-'+chk(body);}
 function parseCode(s){
   if(!s)return null;s=String(s).trim().toUpperCase().replace(/\s+/g,'');const p=s.split('-');if(p.length!==5)return null;
   const body=p.slice(0,4).join('-');if(chk(body)!==p[4])return null;
@@ -1980,12 +1982,12 @@ function parseCode(s){
     temasPor=g.map((x,j)=>{if(!/^[0-9A-Z]{1,4}$/.test(x))return null;const m=parseInt(x,36),nt=DATA[ks[j]].temas.length,r=[];for(let i=0;i<nt;i++)if(m&2**i)r.push(i);return m>=2**nt?null:r;});
     if(temasPor.some(t=>!t||!t.length))return null;}
   else{const t=[...p[1]].map(c=>ALF.indexOf(c));if(!t.length||t.some(i=>i<0||i>=DATA[ks[0]].temas.length))return null;temasPor=[t];}
-  const m=p[2].match(/^(\d+)([GEOR]*)(?:T(\d{1,3}))?(X?)(?:P([0-9A-Z]{1,9}))?$/);if(!m)return null;const n=+m[1];if(n<1||n>50||n<ks.length)return null;
+  const m=p[2].match(/^(\d+)([GEORCY]*)(?:T(\d{1,3}))?(X?)(?:P([0-9A-Z]{1,9}))?$/);if(!m)return null;const n=+m[1];if(n<1||n>50||n<ks.length)return null;
   const seed=+p[3];if(!(seed>0))return null;
-  const gab=m[2].includes('G'),src=m[2].includes('O')?'e':m[2].includes('E')?'m':'g',ale=multi&&m[2].includes('R'),base=m[3]?+m[3]:0,ext=!!(base&&m[4]),prazoMin=m[5]?parseInt(m[5],36):0;
+  const gab=m[2].includes('G'),src=m[2].includes('O')?'e':m[2].includes('E')?'m':'g',ale=multi&&m[2].includes('R'),semCalc=m[2].includes('C'),semTab=m[2].includes('Y'),base=m[3]?+m[3]:0,ext=!!(base&&m[4]),prazoMin=m[5]?parseInt(m[5],36):0;
   const tArg=multi?temasPor:temasPor[0];
-  const grupo=ext?makeCode(ks,tArg,n,gab,seed,src,base,prazoMin,false,ale):s,extCode=base?makeCode(ks,tArg,n,gab,seed,src,base,prazoMin,true,ale):'';
-  return {code:s,k:ks[0],ks,multi,temas:temasPor[0],temasPor,ale,n,gab,src,seed,lim:ext?Math.ceil(base*1.5):base,limBase:base,ext,grupo,extCode,prazo:prazoMin*60000};
+  const grupo=ext?makeCode(ks,tArg,n,gab,seed,src,base,prazoMin,false,ale,semCalc,semTab):s,extCode=base?makeCode(ks,tArg,n,gab,seed,src,base,prazoMin,true,ale,semCalc,semTab):'';
+  return {code:s,k:ks[0],ks,multi,temas:temasPor[0],temasPor,ale,semCalc,semTab,n,gab,src,seed,lim:ext?Math.ceil(base*1.5):base,limBase:base,ext,grupo,extCode,prazo:prazoMin*60000};
 }
 /* nome e assuntos de uma competição (uma ou várias disciplinas) */
 function nomeComp(c){return c.ks.map(k=>DATA[k].nome).join(' + ');}
@@ -2105,7 +2107,7 @@ function quiz(){
     <button class="qexit" onclick="sairQuiz()" title="Sair do ${comp?'teste':'estudo'}">⟵ Sair</button>
     <div class="qmid"><div class="qinfo"><span class="cnt">Questão ${v+1} de ${z.n}</span><span class="clock mono" id="clock" role="timer" aria-live="off" aria-label="Cronômetro">⏱ ${relogio(Date.now()-z.t0)}</span>${comp?`<span class="who">${esc(z.nome)}</span>`:`<span class="score">✓ ${ac}</span>`}</div>
       <div class="prog" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="${z.n}" aria-valuenow="${z.i}"><div style="width:${z.i/z.n*100}%"></div></div></div>
-    <div class="qtools"><button class="tool btnOuvir" onclick="ouvirQuestao()" aria-pressed="false" title="Ouvir a questão (tecla O)" aria-label="Ouvir a questão em voz alta">🔊<span> Ouvir</span></button><button class="tool" onclick="abrirCalc()" title="Calculadora">🧮<span> Calculadora</span></button>${(z.ks||[z.k]).includes('Q')?'<button class="tool" onclick="abrirTabela()" title="Tabela periódica">⚛<span> Tabela</span></button>':''}</div>
+    <div class="qtools"><button class="tool btnOuvir" onclick="ouvirQuestao()" aria-pressed="false" title="Ouvir a questão (tecla O)" aria-label="Ouvir a questão em voz alta">🔊<span> Ouvir</span></button>${z.semCalc?'':'<button class="tool" onclick="abrirCalc()" title="Calculadora">🧮<span> Calculadora</span></button>'}${(z.ks||[z.k]).includes('Q')&&!z.semTab?'<button class="tool" onclick="abrirTabela()" title="Tabela periódica">⚛<span> Tabela</span></button>':''}</div>
   </div>
   ${rev?`<div class="revbar">Revendo a questão ${v+1} (já respondida) · <button class="lnk" onclick="verQ(null)">voltar para a questão ${z.i+1} →</button></div>`:''}
   <article class="qcard" aria-labelledby="qtit">
@@ -2201,7 +2203,7 @@ function baixarRel(){const z=S.quiz,css=document.getElementById('css').textConte
   baixar(`relatorio-${slug(z.nome)}-${new Date(z.t0).toISOString().slice(0,10)}.html`,html,'text/html;charset=utf-8');}
 
 /* ---------- competição: professor ---------- */
-function criarComp(k){stop();S.quiz=null;S.cc={k:null,ks:[],ale:false,n:10,gab:false,src:'g',lim:0,prazoStr:''};drawCC();}
+function criarComp(k){stop();S.quiz=null;S.cc={k:null,ks:[],ale:false,calc:true,tab:true,n:10,gab:false,src:'g',lim:0,prazoStr:''};drawCC();}
 function ccMarcados(){const r={...(S.cc.marc||{})};document.querySelectorAll('.tmck').forEach(x=>{(r[x.dataset.k]=r[x.dataset.k]||{})[x.value]=x.checked;});return r;}
 function ccDisc(k){const c=S.cc;c.marc=ccMarcados();const i=c.ks.indexOf(k);if(i>=0)c.ks.splice(i,1);else c.ks.push(k);c.k=c.ks[0]||null;drawCC();}
 function ccMover(i,d){const c=S.cc,j=i+d;if(j<0||j>=c.ks.length)return;c.marc=ccMarcados();[c.ks[i],c.ks[j]]=[c.ks[j],c.ks[i]];c.k=c.ks[0];drawCC();}
@@ -2226,7 +2228,11 @@ function drawCC(){const c=S.cc,multi=c.ks.length>1,marc=c.marc||{},D=DATA[c.k];s
       <p class="mute small">${c.src==='e'?`Só questões oficiais do ENEM ${ENEM_ANOS.join(' e ')} (${c.ks.map((k,j)=>nEnem[j]+' de '+DATA[k].nome).join(', ')} disponíveis); os assuntos marcados são ignorados.`:c.src==='m'?'Questões similares misturadas com questões oficiais do ENEM dos assuntos marcados (cerca de 1 em cada 3).':'Questões similares às do ENEM, geradas pelo Questionar.'}</p></div>
     <div><span class="lbl">Número de questões</span><div class="qtd">${[5,10,15,20,30,45].map(n=>`<button class="pill nq ${n===c.n?'on':''}" data-n="${n}" onclick="ccNum(${n})">${n}</button>`).join('')}</div><p class="mute small" id="ccDiv">${ccDivTxt()}</p></div>
     <label class="chk"><input type="checkbox" id="gabCk" ${c.gab?'checked':''} onchange="S.cc.gab=this.checked"> Mostrar gabarito e resoluções ao aluno no final (deixe desmarcado se a turma jogar em horários diferentes)</label>
-    <div><span class="lbl">Tempo limite para cada aluno</span><div class="qtd">${[0,5,10,15,20,30,45,60].map(m=>`<button class="pill lim ${m===c.lim?'on':''}" onclick="S.cc.lim=${m};document.querySelectorAll('.pill.lim').forEach(b=>b.classList.toggle('on',b===this));$('#limIn').value=${m||"''"}">${m?m+' min':'Sem limite'}</button>`).join('')}<input id="limIn" type="number" min="1" max="999" placeholder="min" value="${c.lim||''}" oninput="S.cc.lim=Math.max(0,Math.min(999,parseInt(this.value)||0));document.querySelectorAll('.pill.lim').forEach(b=>b.classList.remove('on'))"></div>
+    <div><span class="lbl">Ferramentas liberadas durante a prova</span>
+      <label class="chk"><input type="checkbox" id="calcCk" ${c.calc?'checked':''} onchange="S.cc.calc=this.checked"> 🧮 Calculadora</label>
+      ${c.ks.includes('Q')?`<label class="chk"><input type="checkbox" id="tabCk" ${c.tab?'checked':''} onchange="S.cc.tab=this.checked"> ⚛ Tabela periódica</label>`:''}
+      <p class="mute small">Desmarcado = o botão some da tela do aluno durante a competição.</p></div>
+    <div><span class="lbl">Tempo limite para cada aluno</span><div class="qtd">${[0,5,10,15,20,30,45,60,90,120].map(m=>`<button class="pill lim ${m===c.lim?'on':''}" onclick="S.cc.lim=${m};document.querySelectorAll('.pill.lim').forEach(b=>b.classList.toggle('on',b===this));$('#limIn').value=${m||"''"}">${m?durTxt(m):'Sem limite'}</button>`).join('')}<input id="limIn" type="number" min="1" max="999" placeholder="min" value="${c.lim||''}" oninput="S.cc.lim=Math.max(0,Math.min(999,parseInt(this.value)||0));document.querySelectorAll('.pill.lim').forEach(b=>b.classList.remove('on'))"></div>
       <p class="mute small">O cronômetro do aluno passa a contar regressivamente. Ao zerar, a prova é encerrada automaticamente e as questões não respondidas contam como erro.</p></div>
     <label>Encerrar a competição em (opcional)<input type="datetime-local" id="prazoIn" value="${c.prazoStr||''}" onchange="S.cc.prazoStr=this.value"></label>
     <p class="mute small" style="margin-top:-8px">Depois desse horário o código não permite mais iniciar, as tentativas em andamento são encerradas e o ranking marca envios fora do prazo.</p>
@@ -2243,16 +2249,16 @@ function gerarCodigo(){const c=S.cc;if(!c.ks.length)return;const multi=c.ks.leng
     const ns=divisao(n,c.ks.length);if(ns.some((x,j)=>x>tots[j]))n=Math.min(n,Math.min(...tots)*c.ks.length);}
   let prazoMin=0;if(c.prazoStr){const t=new Date(c.prazoStr).getTime();if(!(t>Date.now()+60000)){$('#ccErr').textContent='O horário de encerramento precisa estar no futuro.';return;}prazoMin=Math.floor(t/60000);}
   const tArg=multi?temasPor:temasPor[0],temas=temasPor[0];
-  const seed=10000+Math.floor(Math.random()*89999),code=makeCode(c.ks,tArg,n,c.gab,seed,c.src,c.lim||0,prazoMin,false,c.ale);c.nUsado=n;
+  const seed=10000+Math.floor(Math.random()*89999),code=makeCode(c.ks,tArg,n,c.gab,seed,c.src,c.lim||0,prazoMin,false,c.ale,!c.calc,!c.tab);c.nUsado=n;
   const pc=parseCode(code),nomeD=nomeComp(pc),D={nome:nomeD};
   const ordemT=multi?`Ordem: ${c.ale?'aleatória (disciplinas misturadas)':'por disciplina — '+c.ks.map(k=>DATA[k].nome).join(' → ')}\nDivisão: ${divisao(n,c.ks.length).map((x,j)=>x+' de '+DATA[c.ks[j]].nome).join(', ')}\n`:'';
-  const regrasT=(c.lim?`Tempo limite: ${c.lim} min por aluno\n`:'')+(prazoMin?`Encerramento: ${dataHora(prazoMin*60000)}\n`:'');
+  const regrasT=(c.lim?`Tempo limite: ${durTxt(c.lim)} por aluno\n`:'')+`Calculadora: ${c.calc?'liberada':'bloqueada'}\n`+(c.ks.includes('Q')?`Tabela periódica: ${c.tab?'liberada':'bloqueada'}\n`:'')+(prazoMin?`Encerramento: ${dataHora(prazoMin*60000)}\n`:'');
   const link=/^https?:/.test(location.protocol)?location.origin+location.pathname+'?c='+code:'';
   const inst=`QUESTIONAR — COMPETIÇÃO\n\nDisciplina${multi?'s':''}: ${D.nome}\n${ordemT}Fonte: ${SRC_NOME[c.src]}\nAssuntos: ${c.src==='e'?'todos (ENEM '+ENEM_ANOS.join(' e ')+')':assuntosComp(pc)}\nNúmero de questões: ${n}\n${regrasT}\n\nCÓDIGO DA COMPETIÇÃO: ${code}\n${link?'Link direto: '+link+'\n':''}\nCOMO PARTICIPAR\n1. Abra o Questionar${link?'':' (endereço informado pelo professor)'}.\n2. Na tela inicial, em "Competição — aluno", digite o código acima e seu nome completo.\n3. Responda às questões. Não é possível voltar a uma questão já confirmada.\n4. Pontuação = número de acertos. Desempate = menor tempo total.\n5. Ao final, ${RECEBIMENTO_URL?'o resultado é enviado automaticamente ao professor. Guarde o CÓDIGO DE RESULTADO (começa com R-) como comprovante.':'copie o CÓDIGO DE RESULTADO (começa com R-) e envie ao professor.'}\n`;
-  S.cc.inst=inst;S.cc.code=code;lsSet('qst_ultcomp',code);S.cc.ext=c.lim?makeCode(c.ks,tArg,n,c.gab,seed,c.src,c.lim,prazoMin,true,c.ale):'';
+  S.cc.inst=inst;S.cc.code=code;lsSet('qst_ultcomp',code);S.cc.chave=registrarChave(code);S.cc.ext=c.lim?makeCode(c.ks,tArg,n,c.gab,seed,c.src,c.lim,prazoMin,true,c.ale,!c.calc,!c.tab):'';
   $('#ccOut').innerHTML=`<div class="card codebox">
     <span class="lbl">Código da competição</span><div class="bigcode mono">${code}</div>
-    <p class="mute">${D.nome} · ${n} questões · ${SRC_NOME[c.src]}${multi?' · ordem '+(c.ale?'aleatória':'específica'):''}${c.src==='e'?'':' · '+temasPor.reduce((a,t)=>a+t.length,0)+' assunto(s)'} · gabarito ${c.gab?'liberado':'oculto'} ao final${c.lim?' · tempo limite: '+c.lim+' min':''}${prazoMin?' · encerra em '+dataHora(prazoMin*60000):''}. Todos os alunos com este código recebem exatamente as mesmas questões, na mesma ordem.</p>
+    <p class="mute">${D.nome} · ${n} questões · ${SRC_NOME[c.src]}${multi?' · ordem '+(c.ale?'aleatória':'específica'):''}${c.src==='e'?'':' · '+temasPor.reduce((a,t)=>a+t.length,0)+' assunto(s)'} · gabarito ${c.gab?'liberado':'oculto'} ao final${c.lim?' · tempo limite: '+durTxt(c.lim):''}${c.calc?'':' · sem calculadora'}${c.ks.includes('Q')&&!c.tab?' · sem tabela periódica':''}${prazoMin?' · encerra em '+dataHora(prazoMin*60000):''}. Todos os alunos com este código recebem exatamente as mesmas questões, na mesma ordem.</p>
     ${link?`<p class="mute mono small">${esc(link)}</p>`:''}
     <div class="row">
       <button class="btn" onclick="copiar(S.cc.code)">Copiar código</button>
@@ -2260,8 +2266,9 @@ function gerarCodigo(){const c=S.cc;if(!c.ks.length)return;const multi=c.ks.leng
       <button class="btn ghost" onclick="baixar('competicao-${code}.txt',S.cc.inst)">⬇ Baixar instruções</button>
       <button class="btn ghost" onclick="entrar('${code}')">Testar como aluno</button>
       <button class="btn ghost" onclick="ranking()">Ir para o ranking</button>
-    </div></div>
-    ${S.cc.ext?`<div class="card codebox ext"><span class="lbl">♿ Código com tempo adicional (+50%: ${Math.ceil(c.lim*1.5)} min)</span><div class="bigcode mono sm">${S.cc.ext}</div>
+    </div>
+    ${S.cc.chave?`<p class="mute small">🔑 Chave do professor (para encerrar a competição antes do horário): <b class="mono">${S.cc.chave}</b> — fica guardada neste navegador; anote se for encerrar de outro aparelho. Não entregue aos alunos.</p>`:''}</div>
+    ${S.cc.ext?`<div class="card codebox ext"><span class="lbl">♿ Código com tempo adicional (+50%: ${durTxt(Math.ceil(c.lim*1.5))})</span><div class="bigcode mono sm">${S.cc.ext}</div>
     <p class="mute small">Entregue apenas a estudantes com direito a atendimento especializado. As questões são as mesmas, na mesma ordem, e o resultado entra no mesmo ranking; no desempate, o tempo é ajustado proporcionalmente ao limite.</p>
     <div class="row"><button class="btn" onclick="copiar(S.cc.ext)">Copiar código com tempo adicional</button></div></div>`:''}`;
   $('#ccOut').scrollIntoView({behavior:'smooth'});}
@@ -2277,19 +2284,23 @@ function entrar(code){stop();S.quiz=null;const c=parseCode(code);if(!c){home();r
     <ul class="regras">
       <li>Pontuação = número de acertos. Desempate = menor tempo total.</li>
       <li>O cronômetro começa ao clicar em “Começar” e para na última confirmação.</li>
-      ${c.lim?`<li><b>Tempo limite: ${c.lim} min${c.ext?' (com tempo adicional)':''}.</b> Ao zerar, a prova é encerrada e as questões não respondidas contam como erro.</li>`:''}
+      ${c.lim?`<li><b>Tempo limite: ${durTxt(c.lim)}${c.ext?' (com tempo adicional)':''}.</b> Ao zerar, a prova é encerrada e as questões não respondidas contam como erro.</li>`:''}
       ${c.prazo?`<li><b>A competição encerra em ${dataHora(c.prazo)}.</b></li>`:''}
+      <li>Ferramentas: calculadora ${c.semCalc?'<b>não permitida</b>':'liberada'}${c.ks.includes('Q')?' · tabela periódica '+(c.semTab?'<b>não permitida</b>':'liberada'):''}.</li>
       <li>Escolha a alternativa e clique em “Confirmar”. Não é possível voltar.</li>
       <li>O resultado só aparece no final. ${RECEBIMENTO_URL?'Ele é enviado automaticamente ao professor.':'Envie o código de resultado ao professor.'}</li>
     </ul>
     <label>Seu nome completo<input id="nomeComp" maxlength="60" value="${esc(lsGet('qst_nome')||'')}" placeholder="Obrigatório"></label>
     <p class="err" id="ncErr"></p>
-    ${c.prazo&&Date.now()>=c.prazo?`<p class="alerta"><b>Competição encerrada</b> em ${dataHora(c.prazo)}. Não é mais possível participar.</p>`:`<button class="btn big" onclick="iniciarComp('${c.code}')">Começar ▶</button>`}
-  </div>`;}
+    <div id="encBox">${c.prazo&&Date.now()>=c.prazo?`<p class="alerta"><b>Competição encerrada</b> em ${dataHora(c.prazo)}. Não é mais possível participar.</p>`:`<button class="btn big" onclick="iniciarComp('${c.code}')">Começar ▶</button>`}</div>
+  </div>`;
+  checarEnc(c.grupo).then(t=>{const b=document.getElementById('encBox');if(t&&b&&!S.quiz)b.innerHTML=`<p class="alerta"><b>Competição encerrada pelo professor</b> em ${dataHora(t)}. Não é mais possível participar.</p>`;});}
 function iniciarComp(code){const nome=$('#nomeComp').value.trim().replace(/\s+/g,' ');if(nome.length<3){$('#ncErr').textContent='Informe seu nome (mínimo 3 letras).';return;}lsSet('qst_nome',nome);
   const c=parseCode(code);if(c.prazo&&Date.now()>=c.prazo){entrar(code);return;}const lista=listaComp(c);
-  comEnem(lista,()=>{S.quiz={mode:'comp',k:c.k,ks:c.ks,code:c.code,gab:c.gab,nome,n:lista.length,lista,i:0,resp:[],sel:null,t0:Date.now(),tq:Date.now(),limMs:c.lim*60000,prazo:c.prazo};
-  startTimer();quiz();window.scrollTo(0,0);});}
+  const bt=document.querySelector('#encBox .btn');if(bt){bt.disabled=true;bt.textContent='⏳ Preparando…';}
+  const vai=()=>comEnem(lista,()=>{S.quiz={mode:'comp',k:c.k,ks:c.ks,semCalc:c.semCalc,semTab:c.semTab,code:c.code,gab:c.gab,nome,n:lista.length,lista,i:0,resp:[],sel:null,t0:Date.now(),tq:Date.now(),limMs:c.lim*60000,prazo:c.prazo};
+  startTimer();iniciarEncPoll(c.grupo);quiz();window.scrollTo(0,0);});
+  if(!RECEBIMENTO_URL||typeof fetch==='undefined'){vai();return;}checarEnc(c.grupo).then(enc=>{if(enc)entrar(code);else vai();});}
 function medalha(p){return p>=90?['🥇','Ouro']:p>=70?['🥈','Prata']:p>=50?['🥉','Bronze']:['🎯','Participação'];}
 function fimComp(){stop();const z=S.quiz;z.fim=Date.now();const ac=z.resp.filter(r=>r.ok).length,ms=Math.min(z.fim-z.t0,z.limMs||Infinity),pct=ac/z.n*100,[em,mn]=medalha(pct);z.msFinal=ms;
   const bits=z.resp.map(r=>r.ok?1:0).join('');
@@ -2298,7 +2309,7 @@ function fimComp(){stop();const z=S.quiz;z.fim=Date.now();const ac=z.resp.filter
   S.quiz.txt=txt;salvarComp({code:z.code,nome:z.nome,a:ac,t:z.n,ms,fin:z.fim,result:z.result,txt});
   app().innerHTML=`
   <div class="top"><button class="back" onclick="home()">← Início</button><h2>Resultado</h2></div>
-  ${z.esgotado?`<p class="alerta">${z.esgotado==='prazo'?'⏰ <b>A competição foi encerrada</b> no horário definido pelo professor.':'⏰ <b>Tempo esgotado!</b>'} Questões não respondidas contam como erro.</p>`:''}
+  ${z.esgotado?`<p class="alerta">${z.esgotado==='professor'?'⏹ <b>O professor encerrou a competição.</b>':z.esgotado==='prazo'?'⏰ <b>A competição foi encerrada</b> no horário definido pelo professor.':'⏰ <b>Tempo esgotado!</b>'} Questões não respondidas contam como erro.</p>`:''}
   <div class="card result">
     <div class="medal">${em}</div><div class="mname">${mn}</div>
     <div class="pts"><b>${ac}</b><span>ponto${ac===1?'':'s'} de ${z.n}</span></div>
@@ -2315,9 +2326,25 @@ function fimComp(){stop();const z=S.quiz;z.fim=Date.now();const ac=z.resp.filter
   ${z.gab?`<h3 class="sec">Gabarito comentado</h3>${z.lista.map((q,i)=>{const r=z.resp[i],c=q.alts.findIndex(a=>a.ok);
     return `<details class="card gabq"><summary><span class="${r.ok?'okc':'badc'}">${r.ok?'✓':'✗'}</span> Questão ${i+1} — ${q.conceito}</summary>${corpoQ(q)}<p>Sua resposta: <b>${r.k<0?'sem resposta':LT[r.k]+') '+q.alts[r.k].t}</b><br>Correta: <b>${LT[c]}) ${q.alts[c].t}</b></p><ol>${q.res.map(s=>`<li>${s}</li>`).join('')}</ol></details>`;}).join('')}`
   :`<p class="mute center">O gabarito comentado será divulgado pelo professor.</p>`}`;
-  window.scrollTo(0,0);anunciar(`${z.esgotado?'Tempo esgotado. ':''}Prova finalizada: ${ac} ponto${ac===1?'':'s'} de ${z.n}, em ${tempoExt(ms)}.`);enviarResultado();}
+  window.scrollTo(0,0);anunciar(`${z.esgotado==='professor'?'O professor encerrou a competição. ':z.esgotado?'Tempo esgotado. ':''}Prova finalizada: ${ac} ponto${ac===1?'':'s'} de ${z.n}, em ${tempoExt(ms)}.`);enviarResultado();}
 /* Envio com confirmação: só considera entregue quando a planilha responde "ok"; se falhar, tenta de novo com espera aleatória
    (evita que uma turma inteira terminando ao mesmo tempo sobrecarregue o Google). */
+/* ---------- encerramento antecipado pelo professor ---------- */
+function chaveProf(grupo){return lsGet('qst_chave_'+grupo)||'';}
+async function postAcao(obj){for(let k=1;k<=4;k++){try{const r=await fetch(RECEBIMENTO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(obj)});const t=(await r.text()).trim();if(t!=='ocupado')return t;}catch(e){}await new Promise(res=>setTimeout(res,1200*k));}return '';}
+function registrarChave(grupo){if(!RECEBIMENTO_URL||typeof fetch==='undefined')return;let ch=chaveProf(grupo);if(!ch){ch=Array.from(crypto.getRandomValues(new Uint8Array(6)),b=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b%32]).join('');lsSet('qst_chave_'+grupo,ch);}postAcao({acao:'registrar',code:grupo,chave:ch});return ch;}
+/* devolve o horário (ms) em que o professor encerrou, ou 0 */
+function checarEnc(grupo,ms=4000){if(!RECEBIMENTO_URL||typeof fetch==='undefined')return Promise.resolve(0);
+  return Promise.race([fetch(RECEBIMENTO_URL+'?status='+encodeURIComponent(grupo)+'&t='+Date.now()).then(r=>r.json()).then(j=>+j.encerrada||0).catch(()=>0),new Promise(r=>setTimeout(()=>r(0),ms))]);}
+function iniciarEncPoll(grupo){clearInterval(S.encPoll);if(!RECEBIMENTO_URL)return;S.encPoll=setInterval(()=>{const z=S.quiz;if(!z||z.mode!=='comp'||z.fim){clearInterval(S.encPoll);return;}
+  checarEnc(grupo,10000).then(t=>{const z2=S.quiz;if(t&&z2&&z2===z&&!z2.fim){z2.encProf=t;encerrarPorTempo('professor');}});},15000+Math.random()*5000);}
+function encerrarAgora(){const c=parseCode(S.rk&&S.rk.atual);if(!c)return;const ch=chaveProf(c.grupo);S._chv='';
+  modal('⏹ Encerrar a competição agora?',`Ninguém mais poderá começar. Quem está fazendo a prova terá a tentativa encerrada em até 20 segundos (questões não respondidas contam como erro) e o resultado será enviado. <b>Não é possível desfazer.</b>${ch?'':`<br><br>Este navegador não tem a chave do professor desta competição (ela fica no aparelho onde o código foi gerado). Digite a chave:<br><input id="chEnc" class="mono" maxlength="12" oninput="S._chv=this.value.trim().toUpperCase()" placeholder="Chave do professor" aria-label="Chave do professor">`}`,
+    [{label:'Cancelar',cls:'ghost'},{label:'⏹ Encerrar agora',cls:'danger',fn:async()=>{const chave=ch||S._chv;if(!chave){toast('Informe a chave do professor.');return;}
+      toast('Encerrando…');const t=await postAcao({acao:'encerrar',code:c.grupo,chave});
+      if(t.startsWith('encerrada:')){if(!ch)lsSet('qst_chave_'+c.grupo,chave);S.rkEnc=+t.split(':')[1]||Date.now();anunciar('Competição encerrada.');if(S.rk)desenharRanking();}
+      else modal('Não foi possível encerrar',t==='negado'?'A chave do professor não confere com a desta competição.':t==='ignorado'?'O script da planilha está desatualizado. Cole a versão 3 do <i>receber-resultados.gs</i> e reimplante (Gerenciar implantações → editar → Nova versão).':'A planilha não respondeu. Verifique a internet e tente de novo.',[{label:'OK'}]);}}]);
+  setTimeout(()=>{const i=document.getElementById('chEnc');if(i)i.focus();},50);}
 async function postResultado(corpo,aoTentar){const MAX=8;
   for(let k=1;k<=MAX;k++){
     try{const r=await fetch(RECEBIMENTO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:corpo});const t=(await r.text()).trim();
@@ -2349,14 +2376,14 @@ function ranking(){stop();S.quiz=null;setAcc(null);S.rk=null;S.rkAuto=null;S.rkV
   <div id="rkOut"></div>`;}
 function obterRecebidos(c){const cods=[c.grupo,...(c.extCode?[c.extCode]:[])];
   return Promise.all(cods.map(cd=>fetch(RECEBIMENTO_URL+'?code='+encodeURIComponent(cd)+'&t='+Date.now()).then(r=>r.text()).then(t=>{try{return JSON.parse(t);}catch(e){throw new Error('resp');}})))
-    .then(js=>js.flatMap(j=>j.resultados||[]).filter(Boolean));}
-function buscarRecebidos(){somIniciar();const msg=t=>{const m=$('#rkMsg');if(m)m.innerHTML=t;};const c=parseCode($('#rkCode').value);
+    .then(js=>{S.rkEnc=Math.max(0,...js.map(j=>+j.encerrada||0));return js.flatMap(j=>j.resultados||[]).filter(Boolean);});}
+function buscarRecebidos(){somIniciar();const msg=t=>{const m=$('#rkMsg');if(m)m.innerHTML=t;};const c=parseCode($('#rkCode').value);S.rkEnc=0;
   if(!c){msg('<p class="err">Código inválido. Confira letras, números e hífens.</p>');return;}lsSet('qst_ultcomp',c.grupo);msg('<p class="mute">⏳ Buscando resultados…</p>');
   clearInterval(S.rkPoll);S.rkPoll=null;
-  obterRecebidos(c).then(L=>{
+  obterRecebidos(c).then(L=>{S.rkAuto={c,em:Date.now(),erro:false};
     if(!L.length){msg('<p class="alerta">Nenhum resultado recebido ainda para <span class="mono">'+esc(c.grupo)+'</span>. Os resultados chegam quando cada aluno termina a prova. A página vai verificar de novo automaticamente.</p>');$('#rkOut').innerHTML='';}
     else{msg('');$('#rkIn').value=L.join('\n');montarRanking();}
-    S.rkAuto={c,em:Date.now(),erro:false};iniciarPoll();})
+    iniciarPoll();})
   .catch(e=>msg('<p class="alerta">Não foi possível acessar a planilha de resultados. '+(navigator.onLine===false?'Você parece estar sem internet.':'O script da planilha não respondeu corretamente — em geral é um erro no código do Apps Script, uma implantação que não foi atualizada (<i>Gerenciar implantações → Nova versão</i>) ou o acesso não está como “Qualquer pessoa”. <a href="'+RECEBIMENTO_URL+'?code=TESTE" target="_blank" rel="noopener">Abrir o teste do script</a> — o correto é aparecer <span class="mono">{"ok":true,…}</span>.')+' Enquanto isso, use o ranking manual abaixo.</p>'));}
 /* verifica novos envios a cada 5 s enquanto o professor está na conferência (pausa durante a cerimônia) */
 function iniciarPoll(){clearInterval(S.rkPoll);S.rkPoll=setInterval(()=>{const a=S.rkAuto;if(!a||!document.getElementById('rkCode')||document.getElementById('cerimonia')||a.busy)return;a.busy=true;
@@ -2386,7 +2413,8 @@ function htmlConf(){const n=S.rk.lista.length,esp=S.rkEsp||0,auto=!!S.rkAuto,pct
     <p class="confst" role="status">${st}</p>
     ${auto?`<p class="mute small">${S.rkAuto.erro?'⚠ Falha na última verificação — tentando de novo.':'🔄 Verificando novos envios a cada 5 s'} · última verificação: <span id="confHora">${new Date(S.rkAuto.em).toLocaleTimeString('pt-BR')}</span></p>`:'<p class="mute small">Ranking montado a partir dos códigos colados (sem atualização automática).</p>'}
     <details><summary>Ver quem já enviou (${n})</summary><div class="confnomes">${nomes.map(x=>`<span>${esc(x)}</span>`).join('')}</div></details>
-    <div class="row"><button class="btn big" onclick="somIniciar();revelar()">🎉 Iniciar cerimônia do ranking</button></div></div>`;}
+    ${auto&&RECEBIMENTO_URL?(S.rkEnc?`<p class="encok">⏹ <b>Competição encerrada pelo professor</b> às ${new Date(S.rkEnc).toLocaleTimeString('pt-BR')}. Ninguém mais pode começar; quem estava fazendo já foi encerrado.</p>`:''):''}
+    <div class="row"><button class="btn big" onclick="somIniciar();revelar()">🎉 Iniciar cerimônia do ranking</button>${auto&&RECEBIMENTO_URL&&!S.rkEnc?'<button class="btn danger" onclick="encerrarAgora()">⏹ Encerrar competição agora</button>':''}</div></div>`;}
 function atualizarConf(foco){const el=document.getElementById('confCard');if(!el||!S.rk)return;const ae=document.activeElement&&document.activeElement.id;const v=ae==='espIn'?$('#espIn').value:null;
   el.outerHTML=htmlConf();if(foco||ae==='espIn'){const i=$('#espIn');if(i){if(v!=null)i.value=v;i.focus();}}}
 function desenharRanking(){
@@ -2394,7 +2422,7 @@ function desenharRanking(){
   const vist=new Map();let dup=0;
   [...porComp[atual]].sort((a,b)=>a.fin-b.fin).forEach(r=>{const key=r.nome.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');if(vist.has(key)){dup++;return;}vist.set(key,r);});
   const tr=r=>parseCode(r.code).ext?r.ms/1.5:r.ms,isExt=r=>parseCode(r.code).ext;
-  const todos=[...vist.values()].sort((a,b)=>b.a-a.a||tr(a)-tr(b)),fora=c.prazo?todos.filter(r=>r.fin>c.prazo+120000):[],L=todos.filter(r=>!fora.includes(r));S.rk.lista=L;
+  const todos=[...vist.values()].sort((a,b)=>b.a-a.a||tr(a)-tr(b)),limF=Math.min(c.prazo?c.prazo+120000:Infinity,S.rkEnc?S.rkEnc+180000:Infinity),fimRef=S.rkEnc&&(!c.prazo||S.rkEnc<c.prazo)?S.rkEnc:c.prazo,fora=todos.filter(r=>r.fin>limF),L=todos.filter(r=>!fora.includes(r));S.rk.lista=L;
   const nq=(L[0]&&L[0].t)||c.n,taxa=Array.from({length:nq},(_,i)=>L.filter(r=>r.bits[i]==="1").length/(L.length||1)*100);
   const pod=L.slice(0,3);S.rkEsp=parseInt(lsGet('qst_esp_'+atual))||0;
   $('#rkOut').innerHTML=`
@@ -2403,12 +2431,12 @@ function desenharRanking(){
   <details class="rkdet" id="rkDet" ${S.rkVisto?'open':''}><summary>📊 Ver ranking completo (tabela, pódio e acertos por questão)<span class="mute small"> — fica oculto para não estragar a surpresa no projetor</span></summary>
   <div id="rkPrint">
   <div class="card"><h3>${nomeComp(c)} · <span class="mono">${atual}</span></h3>
- <p class="mute">${L.length} participante(s) · ${nq} questões${c.lim?' · limite de '+c.lim+' min':''}${c.prazo?' · encerramento: '+dataHora(c.prazo):''}${c.multi?' · ordem '+(c.ale?'aleatória':'por disciplina'):''} · Assuntos: ${assuntosComp(c)}${dup?` · ${dup} envio(s) repetido(s) ignorado(s) (vale a primeira tentativa)`:''}${inval?` · ${inval} código(s) inválido(s)`:''}</p>
+ <p class="mute">${L.length} participante(s) · ${nq} questões${c.lim?' · limite de '+durTxt(c.lim):''}${fimRef?' · encerramento: '+dataHora(fimRef)+(fimRef===S.rkEnc?' (pelo professor)':''):''}${c.multi?' · ordem '+(c.ale?'aleatória':'por disciplina'):''} · Assuntos: ${assuntosComp(c)}${dup?` · ${dup} envio(s) repetido(s) ignorado(s) (vale a primeira tentativa)`:''}${inval?` · ${inval} código(s) inválido(s)`:''}</p>
   <div class="podio">${[1,0,2].map(i=>pod[i]?`<div class="pd p${i+1}"><div class="pm">${['🥇','🥈','🥉'][i]}</div><b>${esc(pod[i].nome)}</b><span>${pod[i].a} pts · ${tempoExt(pod[i].ms)}</span><div class="bar"></div></div>`:'').join('')}</div>
   <table><thead><tr><th>Pos.</th><th>Nome</th><th>Pontos</th><th>Tempo</th><th>Aproveit.</th><th>Finalizado em</th></tr></thead><tbody>
   ${L.map((r,i)=>`<tr><td>${i+1}º</td><td>${esc(r.nome)}${isExt(r)?' <span class="badge" title="Tempo adicional: no desempate, o tempo foi dividido por 1,5">♿ tempo adicional</span>':''}</td><td><b>${r.a}</b>/${r.t}</td><td class="mono">${tempoExt(r.ms)}</td><td>${fmt(r.a/r.t*100,0)}%</td><td>${dataHora(r.fin)}</td></tr>`).join('')}
   </tbody></table>
-  ${fora.length?`<h3>⚠ Enviados após o encerramento (${dataHora(c.prazo)})</h3><p class="mute small">Não entram no ranking; o horário de término foi registrado pelo aparelho do aluno.</p><table><tbody>${fora.map(r=>`<tr><td>${esc(r.nome)}</td><td><b>${r.a}</b>/${r.t}</td><td class="mono">${tempoExt(r.ms)}</td><td>${dataHora(r.fin)}</td></tr>`).join('')}</tbody></table>`:''}</div>
+  ${fora.length?`<h3>⚠ Enviados após o encerramento (${dataHora(fimRef)})</h3><p class="mute small">Não entram no ranking; o horário de término foi registrado pelo aparelho do aluno.</p><table><tbody>${fora.map(r=>`<tr><td>${esc(r.nome)}</td><td><b>${r.a}</b>/${r.t}</td><td class="mono">${tempoExt(r.ms)}</td><td>${dataHora(r.fin)}</td></tr>`).join('')}</tbody></table>`:''}</div>
   <div class="card"><h3>Acertos por questão</h3><p class="mute">Percentual da turma que acertou cada questão — ajuda a identificar conteúdos para retomar.</p>
   <div class="hist">${taxa.map((t,i)=>`<div class="hb" title="Questão ${i+1}: ${fmt(t,0)}%"><div style="height:${Math.max(t,2)}%" class="${t<50?'low':''}"></div><span>${i+1}</span></div>`).join('')}</div>
   <p class="mute small">Para ver o enunciado da questão N, entre com o mesmo código em “Testar como aluno”.</p></div>
