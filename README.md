@@ -35,7 +35,8 @@ O Questionar é uma ferramenta gratuita para estudantes do ensino médio e pré-
 - **Tempo limite** por aluno (com contagem regressiva e encerramento automático) e **horário de encerramento** da competição.
 - **Código com tempo adicional (+50%)** para estudantes com direito a atendimento especializado, no mesmo ranking.
 - Ao final, o aluno recebe um **código de resultado** verificável; com a planilha configurada, o resultado é **enviado automaticamente** ao professor.
-- **Ranking** com pódio, tabela, percentual de acerto por questão e exportação em CSV.
+- **Ranking** com **cerimônia de revelação** (posições reveladas aos poucos, sons de conquista, pódio e confete para o 1º lugar), tabela, percentual de acerto por questão e exportação em CSV.
+- Envio com confirmação e novas tentativas automáticas: testado com **40 alunos terminando ao mesmo tempo** (40 de 40 recebidos, sem duplicatas).
 
 **🧰 Ferramentas**
 - Calculadora científica (arrastável e com suporte a teclado).
@@ -55,6 +56,7 @@ O Questionar é uma ferramenta gratuita para estudantes do ensino médio e pré-
 | `questionar-enem.js` | Imagens das questões oficiais do ENEM (≈ 9 MB). Carregado apenas quando o aluno escolhe questões do ENEM. **Deve ficar na mesma pasta do `index.html`.** |
 | `apps-script/receber-resultados.gs` | Script do Google Apps Script para receber automaticamente os resultados das competições em uma Planilha Google (instruções no próprio arquivo). |
 | `LICENSE.md` | Licença de uso. |
+| `Questionar-assuntos-frequencia-ENEM.pdf` | Lista dos assuntos de cada disciplina com a frequência nas provas do ENEM 2022–2025. |
 
 ## Recebimento automático de resultados (opcional)
 
@@ -85,4 +87,6 @@ Os resultados chegam à aba **Resultados** da planilha. No ranking, o professor 
 
 ---
 
-*“Cada questão que você resolve hoje é um passo a mais em direção ao futuro que você escolher.”*
+*“Matemática, Física e Química são as chaves das exatas: abrem as portas da engenharia, da medicina, da tecnologia e da ciência — e de mundos que você ainda nem imagina. Estudar é abrir esses mundos.”*
+
+🪐 Conheça outras ferramentas do Prof Oswy na **[Órbita do Conhecimento](https://profoswy.github.io/ProfOswy/)**.

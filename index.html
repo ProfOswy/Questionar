@@ -374,6 +374,37 @@ html[data-contraste] .clock,html[data-contraste] .score{color:var(--ink)}
 :root[data-theme="dark"]{--ok:#5fd38d;--bad:#ff8080;--pen:#b9c8ff}
 :root[data-theme="dark"] .btn:not(.ghost),:root[data-theme="dark"] .pill.on,:root[data-theme="dark"] .btnOuvir.on,:root[data-theme="dark"] .alt.sel .lt,:root[data-theme="dark"] .alt.ok .lt,:root[data-theme="dark"] .alt.bad .lt,:root[data-theme="dark"] .bits span,:root[data-theme="dark"] .ck.eq{color:#11141a!important}
 :root[data-theme="dark"] .qexit:hover{color:#11141a}
+/* ===== cerimônia do ranking ===== */
+#cerimonia{position:fixed;inset:0;z-index:60;background:radial-gradient(ellipse at 50% 30%,#22305a 0%,#0c1020 70%);color:#fff;display:flex;flex-direction:column;align-items:center;padding:14px 16px 20px;overflow:auto;font-family:'Kalam',cursive}
+#cerimonia .btn{font-size:.95rem}
+#cerimonia .btn.ghost{background:transparent;color:#fff;border-color:#fff}
+#cerimonia .btn:not(.ghost){background:#ffb300;border-color:#ffb300;color:#111}
+.cer-top{width:100%;max-width:1100px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.cer-tit{font-family:'Permanent Marker','Kalam',cursive;font-size:1.3rem;color:#ffd54f}
+.cer-msg{font-size:clamp(1.4rem,3.4vw,2.4rem);text-align:center;margin:18px 0 8px;min-height:2.4em;line-height:1.25}
+.cer-msg b{color:#ffd54f}
+.cer-podio{display:flex;align-items:flex-end;justify-content:center;gap:clamp(8px,2vw,26px);width:100%;max-width:900px;margin-top:6px}
+.cpd{flex:1;max-width:260px;display:flex;flex-direction:column;align-items:center;text-align:center;opacity:0;transform:translateY(40px) scale(.9);transition:opacity .6s,transform .6s cubic-bezier(.2,1.4,.4,1)}
+.cpd.on{opacity:1;transform:none}.cpd.vazio{visibility:hidden}
+.cpd b{font-size:clamp(1.05rem,2.4vw,1.6rem);max-width:100%;overflow-wrap:anywhere}
+.cpd span{font-size:clamp(.85rem,1.6vw,1rem);opacity:.85;font-family:'IBM Plex Sans',sans-serif}
+.cmed{font-size:clamp(2.4rem,6vw,4.2rem);line-height:1}
+.c1 .cmed{animation:pulsa 1.4s infinite}
+@keyframes pulsa{50%{transform:scale(1.15)}}
+.cbar{width:100%;border-radius:12px 12px 0 0;margin-top:8px;display:flex;align-items:flex-start;justify-content:center;padding-top:8px;font-family:'Permanent Marker',cursive;font-size:1.8rem;color:#111}
+.cbar em{font-style:normal}
+.c1 .cbar{height:clamp(110px,22vh,190px);background:linear-gradient(#ffe082,#ffb300)}
+.c2 .cbar{height:clamp(80px,15vh,135px);background:linear-gradient(#eceff1,#b0bec5)}
+.c3 .cbar{height:clamp(60px,11vh,100px);background:linear-gradient(#ffccbc,#c97b4a)}
+.c1.on b{color:#ffd54f;text-shadow:0 0 18px rgba(255,213,79,.6)}
+.cer-resto{width:100%;max-width:1100px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px;margin-top:22px;font-family:'IBM Plex Sans',sans-serif}
+.crow{display:flex;gap:8px;align-items:baseline;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 10px;opacity:0;transform:translateX(-14px);transition:opacity .35s,transform .35s}
+.crow.on{opacity:1;transform:none}.crow b{color:#ffd54f;min-width:2.4em}.crow span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.crow em{font-style:normal;font-size:.8rem;opacity:.8}
+canvas.confete{position:fixed;inset:0;pointer-events:none;z-index:61}
+html[data-calmo] .cpd,html[data-calmo] .crow{transition:none}
+footer .fbreak{flex-basis:100%;height:0}
+footer .orbita{margin-top:6px;display:inline-flex;align-items:center;gap:6px;width:fit-content;padding:8px 16px;border:2px solid var(--ink);border-radius:999px;color:var(--ink);text-decoration:none;font-family:'Kalam',cursive;font-size:1.05rem}
+footer .orbita:hover{background:var(--ink);color:var(--bg)}
 </style>
 </head>
 <body>
@@ -391,11 +422,13 @@ html[data-contraste] .clock,html[data-contraste] .score{color:var(--ink)}
 <main id="app" tabindex="-1"></main>
 <div id="sr" class="sr-only" aria-live="polite" aria-atomic="true"></div><div id="srA" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
 <footer>
-  <span class="ffrase">“Cada questão que você resolve hoje é um passo a mais em direção ao futuro que você escolher.”</span>
+  <span class="ffrase">“Matemática, Física e Química são as chaves das exatas: abrem as portas da engenharia, da medicina, da tecnologia e da ciência — e de mundos que você ainda nem imagina. Estudar é abrir esses mundos.”</span>
   <a href="https://youtube.com/@ProfOswy" target="_blank" rel="noopener">youtube.com/@ProfOswy</a>
   <span>profoswy@gmail.com</span>
   <span>Instagram: rodrigo.osw</span>
   <span class="fpart"><img src="data:image/png;base64,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" alt="">Em parceria com o Colégio INTEGRADO</span>
+  <span class="fbreak" aria-hidden="true"></span>
+  <a class="orbita" href="https://profoswy.github.io/ProfOswy/" target="_blank" rel="noopener">🪐 Conheça outras ferramentas do Prof Oswy na <b>Órbita do Conhecimento</b> →</a>
 </footer>
 <div id="toast" role="status" aria-live="polite"></div>
 <script>
@@ -1021,22 +1054,22 @@ TEMA('pH e equilíbrio iônico','pH, pOH e acidez de soluções',[
   C('Cálculo de pH',R=>{
     const n=R.pick([1,2,3,4,5,6,8,9,10,11,12,13]),cl=x=>x<7?'ácido':x>7?'básico':'neutro',op=x=>x<7?'básico':'ácido';
     const t=x=>`pH = ${x}; meio ${cl(x)}`;
-    return QF(FIG.escalaPH(),`Uma solução aquosa, a 25 °C, apresenta [H⁺] = 1 × 10${sup(-n)} mol/L. O pH dessa solução e o caráter do meio são:`,
+    return QF(FIG.solucao([['[H⁺] = 1 × 10'+sup(-n)+' mol/L'],['pH = ?','caráter = ?']]),`Uma solução aquosa, a 25 °C, apresenta [H⁺] = 1 × 10${sup(-n)} mol/L. O pH dessa solução e o caráter do meio são:`,
       altTxt(R,t(n),[`pH = ${14-n}; meio ${cl(14-n)}`,`pH = ${n}; meio ${op(n)}`,`pH = −${n}; meio ácido`,`pH = ${14-n}; meio ${cl(n)}`,`pH = ${n+1}; meio ${op(n)}`]),
       [`pH = −log[H⁺].`,`pH = −log(10${sup(-n)}) = ${n}.`,`A 25 °C: pH < 7 ácido; pH = 7 neutro; pH > 7 básico → <b>${t(n)}</b>.`]);
   }),
   C('Variação de pH',R=>{
-    const a=R.int(2,8),d=R.pick([1,2,3]),up=R.int(0,1),b=up?a+d:a-d,F=10**d;
+    const a=R.int(2,8),d=R.pick([1,2,3]),up=a-d<1?1:R.int(0,1),b=up?a+d:a-d,F=10**d;
     const fx=(dir,v)=>`a [H⁺] ${dir} ${fmt(v,0)} ${v===1?'vez':'vezes'}`;
     const ok=fx(up?'diminuiu':'aumentou',F),sm=up?'diminuiu':'aumentou',op=up?'aumentou':'diminuiu',dd=d===1?2:d;
-    return QF(FIG.escalaPH(),`Após uma alteração ambiental, o pH da água de um lago passou de ${a} para ${b}. Em relação à concentração de íons H⁺, é correto afirmar que:`,
+    return QF(FIG.solucao([['Antes','pH = '+a],['Depois','pH = '+b]],true),`Após uma alteração ambiental, o pH da água de um lago passou de ${a} para ${b}. Em relação à concentração de íons H⁺, é correto afirmar que:`,
       altTxt(R,ok,[fx(op,F),fx(sm,dd),fx(sm,F*10),fx(op,dd),'a [H⁺] não se alterou']),
       [`Cada unidade de pH corresponde a um fator 10 na [H⁺] (escala logarítmica).`,`Variação de ${d} unidade(s) → fator 10${sup(d)} = ${F}.`,`O pH ${up?'subiu (meio menos ácido)':'caiu (meio mais ácido)'} → <b>${ok}</b>.`]);
   }),
   C('pH e pOH',R=>{
     const pOH=R.pick([1,2,3,4,5,6,8,9,10,11,12,13]),pH=14-pOH,cl=x=>x<7?'ácida':x>7?'básica':'neutra';
     const t=(x,c)=>`pH = ${x}; solução ${c}`;
-    return QF(FIG.escalaPH(),`Uma solução a 25 °C tem pOH = ${pOH}. Qual é o seu pH e como ela se classifica?`,
+    return QF(FIG.solucao([['pOH = '+pOH],['pH = ?','caráter = ?']]),`Uma solução a 25 °C tem pOH = ${pOH}. Qual é o seu pH e como ela se classifica?`,
       altTxt(R,t(pH,cl(pH)),[t(pOH,cl(pOH)),t(pH,pH<7?'básica':'ácida'),t(pOH,cl(pH)),t(14+pOH,'básica'),t(pH+1,cl(pH))]),
       [`A 25 °C: pH + pOH = 14.`,`pH = 14 − ${pOH} = ${pH}.`,`<b>${t(pH,cl(pH))}</b>.`]);
   })
@@ -1308,6 +1341,10 @@ function gerarLista(k,temas,ci,n,seed){
   F.combustao=f=>{const e=especie(f,30);return sv(e.w+130,Math.max(e.h,120)+20,`<g transform="translate(10,${(Math.max(e.h,120)-e.h)/2})">${e.svg}</g>`+
     `<path d="M${e.w+60} 100 q-25 -25 0 -60 q8 25 20 20 q10 -18 0 -38 q35 25 20 70 q-10 15 -40 8z" style="fill:#f59f00;opacity:.85"/><path d="M${e.w+68} 98 q-10 -15 4 -32 q6 14 14 10 q8 14 -4 24z" style="fill:#ffd43b"/>`+T(e.w+75,Math.max(e.h,120)+12,'+ O₂ → combustão','middle','sm'));};
   F.organica=f=>F.molecula(f);
+  /* béquer(es) com rótulos neutros — não indicam acidez por cor nem por escala */
+  F.solucao=(rot,dois)=>{const bq=(x,ls,lab)=>`<path d="M${x} 40 V170 H${x+110} V40" class="ln"/><rect x="${x+1}" y="80" width="108" height="89" class="water"/>`+[0,1,2,3].map(i=>`<line x1="${x+96}" y1="${150-i*22}" x2="${x+108}" y2="${150-i*22}" class="ln thin"/>`).join('')+(lab?T(x+55,30,lab,'middle','b'):'')+ls.map((l,i)=>T(x+55,196+i*20,l,'middle','sm')).join('');
+    if(dois)return sv(330,212,bq(20,[rot[0][1]],rot[0][0])+`<line x1="140" y1="120" x2="190" y2="120" class="ln thick" marker-end="url(#ah)"/>`+bq(200,[rot[1][1]],rot[1][0]));
+    return sv(330,232,bq(30,rot[0])+`<line x1="150" y1="120" x2="190" y2="120" class="ln" marker-end="url(#ah)"/>`+T(250,110,rot[1][0],'middle','b')+T(250,135,rot[1][1]||'','middle','b'));};
 })();
 
 /* ===== descrições das figuras para leitores de tela e leitura em voz alta (não revelam a resposta) ===== */
@@ -1359,7 +1396,8 @@ const FIG_DESC={
   refracao:()=>'Raio de luz passando do vácuo para um meio material e mudando de direção.',
   bequer:(V,l)=>`Béquer com ${fmt(V,0)} mL de solução; ${l.join('; ')}.`,
   diluicao:(a,b,c,d)=>`Diluição: béquer com ${a} de solução de ${b}; após adicionar água, ${c}; ${d}.`.replace(/\?/g,'desconhecido'),
-  escalaPH:()=>'Escala de pH de 0 a 14: ácido abaixo de 7, neutro em 7 e básico acima de 7.',
+  escalaPH:()=>'Escala de pH de 0 a 14.',
+  solucao:(rot,dois)=>dois?`Dois béqueres com água do lago: ${rot[0][0]}, ${rot[0][1]}; ${rot[1][0]}, ${rot[1][1]}.`:`Béquer com solução aquosa: ${rot[0].join(', ')}. A determinar: ${rot[1].join(', ').replace(/ = \?/g,'')}.`,
   decaimento:(T,un,m)=>`Gráfico de decaimento radioativo: a quantidade cai pela metade a cada ${fmt(T,0)} ${un}.`,
   pistao:(a,b)=>`Gás em cilindro com pistão. Estado inicial: ${a.join(', ')}. Estado final: ${b.join(', ')}.`.replace(/\?/g,'desconhecido'),
   molecula:f=>`Modelo da substância ${f}, com os átomos representados por esferas.`,
@@ -1810,6 +1848,61 @@ document.addEventListener('keydown',e=>{
 });
 a11yAplicar();
 
+/* ================= CERIMÔNIA DE REVELAÇÃO DO RANKING ================= */
+let SOM=null,somLigado=(()=>{try{return localStorage.getItem('qst_som')!=='0';}catch(e){return true;}})();
+function somIniciar(){try{if(!SOM)SOM=new (window.AudioContext||window.webkitAudioContext)();if(SOM.state==='suspended')SOM.resume();}catch(e){SOM=null;}}
+function nota(f,t0,dur,tipo='triangle',vol=.18){if(!SOM||!somLigado)return;const o=SOM.createOscillator(),g=SOM.createGain();o.type=tipo;o.frequency.value=f;
+  g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.02);g.gain.exponentialRampToValueAtTime(.001,t0+dur);o.connect(g).connect(SOM.destination);o.start(t0);o.stop(t0+dur+.05);}
+function somTique(){if(!SOM)return;nota(1320,SOM.currentTime,.07,'sine',.07);}
+function somTambor(seg){if(!SOM||!somLigado)return;const t=SOM.currentTime,n=Math.floor(seg*18);
+  for(let i=0;i<n;i++){const b=SOM.createBuffer(1,SOM.sampleRate*.05,SOM.sampleRate),d=b.getChannelData(0);for(let k=0;k<d.length;k++)d[k]=(Math.random()*2-1)*Math.exp(-k/(d.length*.25));
+    const s=SOM.createBufferSource(),g=SOM.createGain(),f=SOM.createBiquadFilter();f.type='lowpass';f.frequency.value=900;s.buffer=b;g.gain.value=.12+.25*(i/n);s.connect(f).connect(g).connect(SOM.destination);s.start(t+i/18);}}
+function somMedalha(lugar){if(!SOM)return;const t=SOM.currentTime;const base=lugar===3?392:lugar===2?494:0;if(base){nota(base,t,.35);nota(base*1.5,t+.12,.5);}}
+function somFanfarra(){if(!SOM)return;const t=SOM.currentTime;[[523,0,.18],[659,.15,.18],[784,.3,.18],[1047,.45,.7],[784,.75,.18],[1047,.9,1.2]].forEach(([f,d,du])=>{nota(f,t+d,du,'square',.07);nota(f,t+d,du,'triangle',.16);});
+  [262,330,392].forEach(f=>nota(f,t+.9,1.4,'triangle',.08));}
+
+/* confete */
+function confete(dur=4500){if(A11Y.calmo||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))return;const cv=document.createElement('canvas');cv.className='confete';cv.setAttribute('aria-hidden','true');
+  (document.getElementById('cerimonia')||document.body).appendChild(cv);const ctx=cv.getContext&&cv.getContext('2d');if(!ctx){cv.remove();return;}const W=cv.width=innerWidth,H=cv.height=innerHeight;
+  const cores=['#2f5bd3','#c62828','#0d7259','#ffb300','#ff6f00','#8e24aa','#fff'];
+  const P=Array.from({length:220},()=>({x:W/2+(Math.random()-.5)*W*.3,y:H*.35,vx:(Math.random()-.5)*14,vy:-Math.random()*14-4,r:Math.random()*6+4,c:cores[Math.floor(Math.random()*cores.length)],a:Math.random()*6,va:(Math.random()-.5)*.3}));
+  const t0=performance.now();(function f(t){ctx.clearRect(0,0,W,H);P.forEach(p=>{p.vy+=.32;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.a+=p.va;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);ctx.fillStyle=p.c;ctx.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);ctx.restore();});
+    if(t-t0<dur)requestAnimationFrame(f);else cv.remove();})(t0);}
+
+/* cerimônia */
+let cerTimers=[];
+function cerLimpar(){cerTimers.forEach(clearTimeout);cerTimers=[];}
+function cerAgendar(fn,ms){cerTimers.push(setTimeout(fn,ms));}
+function fecharCerimonia(){cerLimpar();document.getElementById('cerimonia')?.remove();document.querySelector('#rkOut h3')?.focus?.();}
+function alternarSom(){somLigado=!somLigado;try{localStorage.setItem('qst_som',somLigado?'1':'0');}catch(e){}const b=document.getElementById('cerSom');if(b){b.textContent=somLigado?'🔊 Som':'🔇 Som';b.setAttribute('aria-pressed',somLigado);}}
+function cerimonia(L,titulo){
+  if(!L||!L.length)return;fecharCerimonia();somIniciar();
+  const rapido=A11Y.calmo||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const ov=document.createElement('div');ov.id='cerimonia';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','Revelação do ranking');
+  const pod=L.slice(0,3),resto=L.slice(3);
+  const card=(r,i)=>`<div class="cpd c${i+1}" id="cpd${i+1}"><div class="cmed">${['🥇','🥈','🥉'][i]}</div><b>${esc(r.nome)}</b><span>${r.a}/${r.t} acertos · ${tempoExt(r.ms)}</span><div class="cbar"><em>${i+1}º</em></div></div>`;
+  ov.innerHTML=`<div class="cer-top"><span class="cer-tit">🏆 ${esc(titulo)}</span><span><button class="btn sm ghost" id="cerSom" aria-pressed="${somLigado}" onclick="alternarSom()">${somLigado?'🔊 Som':'🔇 Som'}</button> <button class="btn sm ghost" onclick="cerPular()">⏭ Pular</button> <button class="btn sm" onclick="fecharCerimonia()">✕ Fechar</button></span></div>
+    <div class="cer-msg" id="cerMsg" aria-live="polite">🥁 E os resultados são…</div>
+    <div class="cer-podio">${[1,0,2].map(i=>pod[i]?card(pod[i],i):'<div class="cpd vazio"></div>').join('')}</div>
+    ${resto.length?`<div class="cer-resto" id="cerResto">${resto.map((r,j)=>`<div class="crow" id="crow${j+4}"><b>${j+4}º</b><span>${esc(r.nome)}</span><em>${r.a}/${r.t} · ${tempoExt(r.ms)}</em></div>`).join('')}</div>`:''}`;
+  document.body.appendChild(ov);ov.querySelector('.btn').focus();
+  const msg=t=>{const m=document.getElementById('cerMsg');if(m)m.innerHTML=t;};
+  const mostrar=id=>document.getElementById(id)?.classList.add('on');
+  const vencedor=()=>{mostrar('cpd1');somFanfarra();confete();
+    const empate=L[1]&&L[1].a===L[0].a&&Math.abs(L[1].ms-L[0].ms)<1;
+    msg(`🎉 <b>Parabéns, ${esc(L[0].nome)}!</b> ${empate?'Empate técnico no 1º lugar!':'Campeão(ã) da competição'} com ${L[0].a} de ${L[0].t} acertos!`);anunciar(`Primeiro lugar: ${L[0].nome}, com ${L[0].a} acertos. Parabéns!`);};
+  window.cerPular=()=>{cerLimpar();ov.querySelectorAll('.crow,.cpd').forEach(e=>e.classList.add('on'));vencedor();};
+  if(rapido){cerPular();return;}
+  let t=0;somTambor(2.2);t+=2400;
+  const n=resto.length,passo=n?Math.max(70,Math.min(380,5000/n)):0;
+  if(n){cerAgendar(()=>msg(`Do ${L.length}º ao 4º lugar…`),t);for(let j=n-1;j>=0;j--){cerAgendar(()=>{mostrar('crow'+(j+4));somTique();},t);t+=passo;}t+=700;}
+  if(pod[2]){cerAgendar(()=>{msg('🥉 Em 3º lugar…');},t);t+=900;cerAgendar(()=>{mostrar('cpd3');somMedalha(3);msg(`🥉 3º lugar: <b>${esc(pod[2].nome)}</b>`);anunciar('Terceiro lugar: '+pod[2].nome);},t);t+=1800;}
+  if(pod[1]){cerAgendar(()=>{msg('🥈 Em 2º lugar…');},t);t+=900;cerAgendar(()=>{mostrar('cpd2');somMedalha(2);msg(`🥈 2º lugar: <b>${esc(pod[1].nome)}</b>`);anunciar('Segundo lugar: '+pod[1].nome);},t);t+=1900;}
+  cerAgendar(()=>{msg('🥁 E o 1º lugar vai para…');somTambor(2.4);},t);t+=2600;
+  cerAgendar(vencedor,t);
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('cerimonia')){fecharCerimonia();}});
+
 /* ================= APLICAÇÃO ================= */
 const S={quiz:null,timer:null,cfg:null,cc:null};
 const app=()=>document.getElementById('app');
@@ -1870,7 +1963,7 @@ function home(){
       <span class="dart">${SVGART[k]}</span>
       <span class="ico">${d.icone}</span><span class="dn">${d.nome}</span>
       <span class="frase">“${d.frase}”</span>
-      <span class="dm">${d.temas.length} assuntos · ${d.temas.reduce((s,t)=>s+t.conceitos.length,0)} geradores</span>
+      <span class="dm">${d.temas.length} assuntos</span>
     </button>`).join('')}</div>
   <div class="duo">
     <div class="card">
@@ -1899,7 +1992,7 @@ function abrirDisc(k){
   </div>
   ${ENEM.some(e=>e.k===k)?`<div class="card enemcard"><div><b>📄 Questões oficiais do ENEM</b><span class="mute small">${ENEM.filter(e=>e.k===k).length} questões de ${D.nome} das provas de ${ENEM_ANOS.join(' e ')}, com gabarito oficial do INEP.</span></div><button class="btn" onclick="cfgEstudo('${k}',-1,-1,'e')">Resolver questões do ENEM</button></div>`:''}
   <div class="tools"><span class="lbl">Ferramentas:</span><button class="btn sm ghost" onclick="abrirCalc()">🧮 Calculadora</button>${k==='Q'?'<button class="btn sm ghost" onclick="abrirTabela()">⚛ Tabela periódica</button>':''}</div>
-  <h3 class="sec">Assuntos e geradores</h3>
+  <h3 class="sec">Assuntos</h3>
   <p class="mute">Toque em um conceito para estudar só ele.</p>
   <div class="temas">${D.temas.map((t,ti)=>`
     <div class="tema">
@@ -2153,11 +2246,22 @@ function fimComp(){stop();const z=S.quiz;z.fim=Date.now();const ac=z.resp.filter
     return `<details class="card gabq"><summary><span class="${r.ok?'okc':'badc'}">${r.ok?'✓':'✗'}</span> Questão ${i+1} — ${q.conceito}</summary>${corpoQ(q)}<p>Sua resposta: <b>${r.k<0?'sem resposta':LT[r.k]+') '+q.alts[r.k].t}</b><br>Correta: <b>${LT[c]}) ${q.alts[c].t}</b></p><ol>${q.res.map(s=>`<li>${s}</li>`).join('')}</ol></details>`;}).join('')}`
   :`<p class="mute center">O gabarito comentado será divulgado pelo professor.</p>`}`;
   window.scrollTo(0,0);anunciar(`${z.esgotado?'Tempo esgotado. ':''}Prova finalizada: ${ac} ponto${ac===1?'':'s'} de ${z.n}, em ${tempoExt(ms)}.`);enviarResultado();}
-function enviarResultado(){const z=S.quiz;if(!RECEBIMENTO_URL||typeof fetch==='undefined')return;const el=()=>document.getElementById('envio');
+/* Envio com confirmação: só considera entregue quando a planilha responde "ok"; se falhar, tenta de novo com espera aleatória
+   (evita que uma turma inteira terminando ao mesmo tempo sobrecarregue o Google). */
+async function postResultado(corpo,aoTentar){const MAX=8;
+  for(let k=1;k<=MAX;k++){
+    try{const r=await fetch(RECEBIMENTO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:corpo});const t=(await r.text()).trim();
+      if(r.ok&&(t==='ok'||t==='duplicado'||t==='ignorado'))return true;}catch(e){}
+    if(k<MAX){aoTentar&&aoTentar(k+1,MAX);await new Promise(res=>setTimeout(res,1500+Math.random()*2500*k));}}
+  return false;}
+async function enviarResultado(){const z=S.quiz;if(!RECEBIMENTO_URL||typeof fetch==='undefined'||z._enviando)return;const el=()=>document.getElementById('envio');z._enviando=true;
   const corpo=JSON.stringify({code:z.code,nome:z.nome,a:z.resp.filter(r=>r.ok).length,t:z.n,ms:z.msFinal??(z.fim-z.t0),result:z.result});
-  fetch(RECEBIMENTO_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:corpo})
-    .then(()=>{if(el()){el().className='envio ok';el().textContent='✓ Resultado enviado automaticamente ao professor. Guarde o código abaixo como comprovante.';}})
-    .catch(()=>{if(el()){el().className='envio bad';el().innerHTML='Não foi possível enviar automaticamente (sem internet?). <button class="lnk" onclick="enviarResultado()">Tentar de novo</button> ou copie o código abaixo e envie ao professor.';}});}
+  if(el()){el().className='envio';el().textContent='⏳ Enviando resultado ao professor…';}
+  await new Promise(res=>setTimeout(res,Math.random()*2000));
+  const ok=await postResultado(corpo,(k,M)=>{if(el())el().textContent=`⏳ Muitos envios ao mesmo tempo — tentando novamente (${k}/${M})…`;});
+  z._enviando=false;
+  if(ok){z.enviado=true;if(el()){el().className='envio ok';el().textContent='✓ Resultado recebido pela planilha do professor. Guarde o código abaixo como comprovante.';}anunciar('Resultado enviado ao professor.');}
+  else if(el()){el().className='envio bad';el().innerHTML='Não foi possível confirmar o envio automático. <button class="lnk" onclick="enviarResultado()">Tentar de novo</button> ou copie o código abaixo e envie ao professor.';}}
 
 /* ---------- ranking ---------- */
 function ranking(){stop();S.quiz=null;setAcc(null);S.rk=null;
@@ -2173,7 +2277,7 @@ function ranking(){stop();S.quiz=null;setAcc(null);S.rk=null;
       <button class="btn" onclick="montarRanking()">Montar ranking</button><button class="btn ghost" onclick="$('#rkIn').value='';$('#rkOut').innerHTML=''">Limpar</button></div>
   </div>
   <div id="rkOut"></div>`;}
-function buscarRecebidos(){const msg=t=>{const m=$('#rkMsg');if(m)m.innerHTML=t;};const c=parseCode($('#rkCode').value);
+function buscarRecebidos(){somIniciar();const msg=t=>{const m=$('#rkMsg');if(m)m.innerHTML=t;};const c=parseCode($('#rkCode').value);
   if(!c){msg('<p class="err">Código inválido. Confira letras, números e hífens.</p>');return;}lsSet('qst_ultcomp',c.grupo);msg('<p class="mute">⏳ Buscando resultados…</p>');
   const cods=[c.grupo,...(c.extCode?[c.extCode]:[])];
   Promise.all(cods.map(cd=>fetch(RECEBIMENTO_URL+'?code='+encodeURIComponent(cd)+'&t='+Date.now()).then(r=>r.text()).then(t=>{try{return JSON.parse(t);}catch(e){throw new Error('resp');}})))
@@ -2182,13 +2286,14 @@ function buscarRecebidos(){const msg=t=>{const m=$('#rkMsg');if(m)m.innerHTML=t;
     msg('<p class="alerta okb">✓ '+L.length+' resultado(s) recebido(s).</p>');$('#rkIn').value=L.join('\n');montarRanking();})
   .catch(e=>msg('<p class="alerta">Não foi possível acessar a planilha de resultados. '+(navigator.onLine===false?'Você parece estar sem internet.':'O script da planilha não respondeu corretamente — em geral é um erro no código do Apps Script, uma implantação que não foi atualizada (<i>Gerenciar implantações → Nova versão</i>) ou o acesso não está como “Qualquer pessoa”. <a href="'+RECEBIMENTO_URL+'?code=TESTE" target="_blank" rel="noopener">Abrir o teste do script</a> — o correto é aparecer <span class="mono">{"ok":true,…}</span>.')+' Enquanto isso, use o ranking manual abaixo.</p>'));}
 function lerArqs(fs){[...fs].forEach(f=>{const r=new FileReader();r.onload=()=>{$('#rkIn').value+=(($('#rkIn').value?'\n':'')+r.result);};r.readAsText(f);});}
-function montarRanking(){
+function montarRanking(){somIniciar();
   const toks=($('#rkIn').value.match(/R-[A-Za-z0-9_-]{20,}/g)||[]);const val=[];let inval=0;
   toks.forEach(t=>{const r=parseResult(t);if(r)val.push(r);else inval++;});
   if(!val.length){$('#rkOut').innerHTML=`<p class="err">${toks.length?'':'A caixa está vazia. '}Nenhum código de resultado válido encontrado${inval?` (${inval} inválido(s) ou adulterado(s))`:''}.</p>`;return;}
   const porComp={};val.forEach(r=>{const g=parseCode(r.code).grupo;(porComp[g]=porComp[g]||[]).push(r);});
   const codes=Object.keys(porComp).sort((a,b)=>porComp[b].length-porComp[a].length);
-  S.rk={porComp,codes,inval,atual:codes[0]};desenharRanking();}
+  S.rk={porComp,codes,inval,atual:codes[0]};desenharRanking();revelar();}
+function revelar(){const c=parseCode(S.rk.atual);cerimonia(S.rk.lista,'Competição de '+DATA[c.k].nome+' · '+S.rk.lista.length+' participante(s)');}
 function desenharRanking(){
   const {porComp,codes,inval,atual}=S.rk,c=parseCode(atual),D=DATA[c.k];setAcc(c.k);
   const vist=new Map();let dup=0;
@@ -2211,7 +2316,7 @@ function desenharRanking(){
   <div class="hist">${taxa.map((t,i)=>`<div class="hb" title="Questão ${i+1}: ${fmt(t,0)}%"><div style="height:${Math.max(t,2)}%" class="${t<50?'low':''}"></div><span>${i+1}</span></div>`).join('')}</div>
   <p class="mute small">Para ver o enunciado da questão N, entre com o mesmo código em “Testar como aluno”.</p></div>
   </div>
-  <div class="row noprint actions"><button class="btn" onclick="baixarCSV()">⬇ Exportar planilha (CSV)</button><button class="btn ghost" onclick="window.print()">🖨 Imprimir</button></div>`;}
+  <div class="row noprint actions"><button class="btn" onclick="somIniciar();revelar()">🎉 Revelar com cerimônia</button><button class="btn ghost" onclick="baixarCSV()">⬇ Exportar planilha (CSV)</button><button class="btn ghost" onclick="window.print()">🖨 Imprimir</button></div>`;}
 function baixarCSV(){const L=S.rk.lista,lin=['Posição;Nome;Pontos;Total;Tempo (s);Aproveitamento (%);Finalizado em'];
   L.forEach((r,i)=>lin.push([i+1,'"'+r.nome.replace(/"/g,'""')+'"',r.a,r.t,fmtF(r.ms/1000,1),fmt(r.a/r.t*100,1),dataHora(r.fin)].join(';')));
   baixar(`ranking-${S.rk.atual}.csv`,'﻿'+lin.join('\n'),'text/csv;charset=utf-8');}
